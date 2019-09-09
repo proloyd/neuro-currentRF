@@ -43,6 +43,6 @@ setup(
     ext_modules=extensions,
     url='https://github.com/proloyd/neuro-currentRF',
     project_urls={
-        "Source Code": "https://github.com/proloyd/DstRF/archive/0.2.tar.gz",
+        "Source Code": "https://github.com/proloyd/neuro-currentRF/archive/v0.3.tar.gz",
     }
 )
