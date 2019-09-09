@@ -68,5 +68,5 @@ MEG via Non-Convex Optimization](https://isr.umd.edu/Labs/CSSL/simonlab/pubs/Asi
 
 ## Build status
 
-[![Build Status](https://travis-ci.org/proloyd/DstRF.svg?branch=master)](https://travis-ci.org/)
-[![Build status](https://ci.appveyor.com/api/projects/status/adl418pnhugm59br/branch/master?svg=true)](https://ci.appveyor.com/project/proloyd/dstrf/branch/master)
+[![Build Status](https://travis-ci.com/proloyd/neuro-currentRF.svg?token=Scq13yuJgybzKz4tNyxx&branch=master)](https://travis-ci.com/proloyd/neuro-currentRF)
+[![Build status](https://ci.appveyor.com/api/projects/status/s0b4si7yj280f9t8?svg=true)](https://ci.appveyor.com/project/proloyd/neuro-currentrf)
