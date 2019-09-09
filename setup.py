@@ -26,7 +26,7 @@ setup(
     description="A Unified Approach to MEG Source Analysis under the Continuous Stimuli Paradigm",
     long_description='add-on module to eelbrain for neural current RF estimation'
                      'GitHub: https://github.com/proloyd/neuro-currentRF',
-    version="0.3",
+    version="0.4dev",
     python_requires='>=3.6',
 
     install_requires=[
@@ -43,6 +43,6 @@ setup(
     ext_modules=extensions,
     url='https://github.com/proloyd/neuro-currentRF',
     project_urls={
-        "Source Code": "https://github.com/proloyd/DstRF/archive/0.2.tar.gz",
+        "Source Code": "https://github.com/proloyd/neuro-currentRF/archive/0.3.tar.gz",
     }
 )
