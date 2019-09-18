@@ -1,5 +1,5 @@
-include fit_ncrf/dsyevh3C/*.c
-include fit_ncrf/dsyevh3C/*.h
-include fit_ncrf/dsyevh3C/README
+include ncrf/dsyevh3C/*.c
+include ncrf/dsyevh3C/*.h
+include ncrf/dsyevh3C/README
 include *.txt
 recursive-include . *.pyx
