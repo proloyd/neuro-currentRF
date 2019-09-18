@@ -14,6 +14,7 @@ The following comment will install the latest released version:
 ```commandline
 pip install ncrf
 ```
+Note: yet to be released on PyPI yet. 
 
 ### Development version from GiHub
 After cloning the GitHub repository, install using pip: 
@@ -24,6 +25,12 @@ cd neuro-currentRF
 pip install -e .
 ```
 and there you go!
+If the last command throws any error, ``Cython`` is most likely not installed. Then try installing ``Cython`` by following
+command: 
+```commandline
+conda install cython
+```
+then enter the last command again, and that should do the trick. 
 
 ## How to use:
 run
