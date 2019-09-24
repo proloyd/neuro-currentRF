@@ -450,6 +450,8 @@ class ncRF:
     tstep = None
     tstop = None
     residual = None
+    mu = None
+    theta = None
 
     def __init__(self, lead_field, noise_covariance, n_iter=30, n_iterc=10, n_iterf=100):
         if lead_field.has_dim('space'):
