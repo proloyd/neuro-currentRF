@@ -520,13 +520,14 @@ class ncRF:
         for k in self._PICKLE_ATTRS:
             setattr(self, k, state.get(k, None))
         # make compatible with one tstop case
-        self.tstop = [self.tstop]
-        self._basis = [self._basis]
-        if len(self._stim_dims) > 1:
-            if len(self.tstop) != len(self._stim_dims):
-                self.tstop = self.tstop * len(self._stim_dims)
-            if len(self._basis) != len(self._stim_dims):
-                self._basis = self._basis * len(self._stim_dims)
+        if self._stim_dims is not None:
+            self.tstop = self.tstop if isinstance(self.tstop, collections.Sequence) else [self.tstop]
+            self._basis = self._basis if isinstance(self._basis, collections.Sequence) else [self._basis]
+            if len(self._stim_dims) > 1:
+                if len(self.tstop) != len(self._stim_dims):
+                    self.tstop = self.tstop * len(self._stim_dims)
+                if len(self._basis) != len(self._stim_dims):
+                    self._basis = self._basis * len(self._stim_dims)
         # make compatible with the previous version
         if self._cv_results is None:
             info = state.get('_cv_info')
