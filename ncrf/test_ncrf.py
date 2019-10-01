@@ -43,8 +43,8 @@ def test_ncrf():
     # 1 stimulus
     model = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu=0.0019444, n_iter=3, n_iterc=3, n_iterf=10)
     # check residual and explained var
-    assert model.explained_var == pytest.approx(1 - 0.9941714468772715, rel=0.001)
-    assert model.voxelwise_explained_variance.sum() == pytest.approx(0.0867765302117846, rel=0.001)
+    assert model.explained_var == pytest.approx(1 - 0.9941346037905334, rel=0.001)
+    assert model.voxelwise_explained_variance.sum() == pytest.approx(0.08444086532940269, rel=0.001)
     assert model.residual == pytest.approx(172.714, 0.001)
     assert model.gaussian_fwhm == 20.0
     # check scaling
@@ -68,7 +68,8 @@ def test_ncrf():
     # 2 stimuli, one of them 2-d, normalize='l2'
     diff = stim.diff('time')
     stim2 = concatenate([diff.clip(0), diff.clip(max=0)], Categorial('rep', ['on', 'off']))
-    model = fit_ncrf(meg, [stim, stim2], fwd, emptyroom, tstop=0.2, normalize='l2', mu=0.0019444, n_iter=3, n_iterc=3, n_iterf=10)
+    model = fit_ncrf(meg, [stim, stim2], fwd, emptyroom, tstop=[0.2, 0.2], normalize='l2', mu=0.0019444, n_iter=3, \
+                                                                                                          n_iterc=3, n_iterf=10)
     # check scaling
     assert model._stim_baseline[0] == stim.mean()
     assert model._stim_scaling[0] == stim.std()

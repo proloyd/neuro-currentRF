@@ -1,6 +1,7 @@
 # Author: Proloy Das <proloy@umd.edu>
 import time
 import copy
+import collections
 from operator import attrgetter
 import numpy as np
 
@@ -100,7 +101,7 @@ def proxg_group_opt(z, mu):
     return z
 
 
-def covariate_from_stim(stims, M):
+def covariate_from_stim(stims, Ms):
     """Form covariate matrix from stimulus
 
     parameters
@@ -112,8 +113,8 @@ def covariate_from_stim(stims, M):
 
     returns
     -------
-    x : ndarray
-        Covariate matrix.
+    x : list of ndarray
+        Covariate matrices.
     """
     ws = []
     for stim in stims:
@@ -127,13 +128,14 @@ def covariate_from_stim(stims, M):
 
     length = w.shape[1]
     Y = []
-    for j in range(w.shape[0]):
+    M_ = max(Ms)
+    for j, M in zip(range(w.shape[0]), Ms):
         X = []
-        for i in range(length - M + 1):
+        for i in range(M_ - M, length - M + 1):
             X.append(np.flipud(w[j, i:i + M]))
         Y.append(np.array(X))
 
-    return np.array(Y)
+    return Y
 
 
 def _myinv(x):
@@ -239,7 +241,7 @@ class REG_Data:
         if tstart != 0:
             raise NotImplementedError("tstart != 0 is not implemented")
         self.tstart = tstart
-        self.tstop = tstop
+        self.tstop = tstop if isinstance(tstop, collections.Sequence) else [tstop]
         self.nlevel = nlevel
         self.s_baseline = baseline
         self.s_scaling = scaling
@@ -287,6 +289,10 @@ class REG_Data:
             else:
                 raise ValueError(f"stim={stim}: stimulus with more than 2 dimensions")
 
+        if len(self.tstop) == 1:
+            self.tstop = self.tstop * len(stim_dims)
+        assert len(self.tstop) == len(stim_dims)
+
         # stim normalization
         if self.s_baseline is not None:
             if len(self.s_baseline) != len(stims):
@@ -303,12 +309,13 @@ class REG_Data:
             # initialize time axis
             self.tstep = meg_time.tstep
             start = int(round(self.tstart / self.tstep))
-            stop = int(round(self.tstop / self.tstep))
-            self.filter_length = stop - start + 1
+            stop = [int(round(tstop / self.tstep)) for tstop in self.tstop]
+            self.filter_length = [stop_ - start + 1 for stop_ in stop]
             # basis
-            x = np.linspace(int(round(1000*self.tstart)), int(round(1000*self.tstop)), self.filter_length)
-            stds = self.gaussian_fwhm / (2 * (2 * np.log(2)) ** 0.5)
-            self.basis = gaussian_basis(int(round((self.filter_length-1)/self.nlevel)), x, stds)
+            self.basis = []
+            for tstop, filter_length in zip(self.tstop, self.filter_length):
+                x = np.linspace(int(round(1000*self.tstart)), int(round(1000*tstop)), filter_length)
+                self.basis.append(gaussian_basis(int(round((filter_length-1)/self.nlevel)), x))
             # stimuli
             self._stim_dims = stim_dims
             self._stim_names = [x.name for x in stims]
@@ -320,22 +327,30 @@ class REG_Data:
                 raise ValueError(f"stim={stim!r}: dimensions incompatible with previously added data")
 
         # add meg data
+        m = max([basis.shape[0] for basis in self.basis])
         y = meg.get_data(('sensor', 'time'))
-        y = y[:, self.basis.shape[0]-1:].astype(np.float64)
+        y = y[:, m-1:].astype(np.float64)
         self.meg.append(y / sqrt(y.shape[1]))  # Mind the normalization
 
         if self._norm_factor is None:
             self._norm_factor = sqrt(y.shape[1])
 
         # add corresponding covariate matrix
-        covariates = np.dot(covariate_from_stim(stims, self.filter_length),
-                            self.basis) / sqrt(y.shape[1])  # Mind the normalization
-        if covariates.ndim > 2:
-            self._n_predictor_variables = covariates.shape[0]
-            covariates = covariates.swapaxes(1, 0)
+        # covariates = np.dot(covariate_from_stim(stims, self.filter_length),
+        #                     self.basis) / sqrt(y.shape[1])  # Mind the normalization
+        stim_lens = [len(dim) if dim else 1 for dim in stim_dims]
+        filter_lengths = np.repeat(np.asanyarray(self.filter_length), stim_lens)
+        _covariates = covariate_from_stim(stims, filter_lengths)
+        i = 0
+        covariates = []
+        for dim, basis in zip(stim_dims, self.basis):
+            l = len(dim) if dim else 1
+            covariates.extend([np.dot(x, basis) / sqrt(y.shape[1]) for x in _covariates[i:i+l]])
+            # Mind the normalization
+            i += l
+        self._n_predictor_variables = len(covariates)
 
-        first_dim = covariates.shape[0]
-        x = covariates.reshape(first_dim, -1).astype(np.float64)
+        x = np.concatenate(covariates, axis=1).astype(np.float64)
         self.covariates.append(x)
 
     def _prewhiten(self, whitening_filter):
@@ -508,6 +523,15 @@ class ncRF:
     def __setstate__(self, state):
         for k in self._PICKLE_ATTRS:
             setattr(self, k, state.get(k, None))
+        # make compatible with one tstop case
+        if self._stim_dims is not None:
+            self.tstop = self.tstop if isinstance(self.tstop, collections.Sequence) else [self.tstop]
+            self._basis = self._basis if isinstance(self._basis, collections.Sequence) else [self._basis]
+            if len(self._stim_dims) > 1:
+                if len(self.tstop) != len(self._stim_dims):
+                    self.tstop = self.tstop * len(self._stim_dims)
+                if len(self._basis) != len(self._stim_dims):
+                    self._basis = self._basis * len(self._stim_dims)
         # make compatible with the previous version
         if self._cv_results is None:
             info = state.get('_cv_info')
@@ -564,8 +588,8 @@ class ncRF:
             self.Sigma_b.append(s.copy())
 
         # initializing \Theta
-        self.theta = np.zeros((len(self.source) * dc, data._n_predictor_variables * data.basis.shape[1]),
-                              dtype=np.float64)
+        l = sum([basis.shape[1]*(len(dim) if dim else 1) for basis, dim in zip(data.basis, data._stim_dims)])
+        self.theta = np.zeros((len(self.source) * dc, l), dtype=np.float64)
 
     def _set_mu(self, mu, data):
         self.mu = mu
@@ -1021,34 +1045,42 @@ class ncRF:
     def h(self):
         """The spatio-temporal response function as (list of) NDVar"""
         n_vars = sum(len(dim) if dim else 1 for dim in self._stim_dims)
-        if n_vars > 1:
-            shape = (self.theta.shape[0], n_vars, -1)
-            trf = self.theta.reshape(shape)
-            trf = trf.swapaxes(1, 0)
-        else:
-            trf = self.theta[np.newaxis, :]
-
-        trf = np.dot(trf, self._basis.T) / self.lead_field_scaling
-
-        time = UTS(self.tstart, self.tstep, trf.shape[-1])
         if self.space:
-            shared_dims = (self.source, self.space, time)
+            _shared_dims = (self.source, self.space)
         else:
-            shared_dims = (self.source, time)
-        trf = trf.reshape((-1, *(map(len, shared_dims))))
+            _shared_dims = (self.source, )
+
+        if n_vars > 1:
+            _trf = []
+            start = 0
+            stop = 0
+            for basis, dim in zip(self._basis, self._stim_dims):
+                stim_len = len(dim) if dim else 1
+                stop += basis.shape[1] * stim_len
+                theta = self.theta[:, start:stop].copy()
+                shape = (self.theta.shape[0], stim_len, -1)
+                theta = theta.reshape(shape)
+                _trf.append(np.squeeze(theta.swapaxes(1, 0)))
+                start += basis.shape[1] * stim_len
+        else:
+            _trf = [self.theta]
+
+        trf = [np.dot(x, basis.T) / self.lead_field_scaling for x, basis in zip(_trf, self._basis)]
 
         h = []
-        i = 0
-        for dim, name in zip(self._stim_dims, self._stim_names):
+        for x, dim, name in zip(trf, self._stim_dims, self._stim_names):
             if dim:
+                time = UTS(self.tstart, self.tstep, x.shape[-1])
+                shared_dims = (*_shared_dims, time)
+                x = x.reshape((-1, *(map(len, shared_dims))))
                 dims = (dim, *shared_dims)
-                i1 = i + len(dim)
-                x = trf[i: i1]
-                i = i1
+
             else:
-                dims = shared_dims
-                x = trf[i]
-                i += 1
+                time = UTS(self.tstart, self.tstep, x.shape[-1])
+                dims = (*_shared_dims, time)
+                x = x.reshape(*(map(len, dims)))
+                # x = trf[i]
+                # i += 1
             h.append(NDVar(x, dims, name=name))
 
         if self._stim_is_single:
@@ -1127,7 +1159,8 @@ class ncRF:
 
         def cvfunc(mu: float) -> CVResult:
             # kf = KFold(n_splits=n_splits)
-            kf = TimeSeriesSplit(r=0.05, p=n_splits, d=data.basis.shape[1])
+            d = max(basis.shape[1] for basis in data.basis)
+            kf = TimeSeriesSplit(r=0.05, p=n_splits, d=d)
             ll = []
             ll1 = []
             ll2 = []
