@@ -60,7 +60,8 @@ def test_ncrf():
     # 2 stimuli, one of them 2-d, normalize='l2'
     diff = stim.diff('time')
     stim2 = concatenate([diff.clip(0), diff.clip(max=0)], Categorial('rep', ['on', 'off']))
-    model = fit_ncrf(meg, [stim, stim2], fwd, emptyroom, tstop=0.2, normalize='l2', mu=0.0019444, n_iter=3, n_iterc=3, n_iterf=10)
+    model = fit_ncrf(meg, [stim, stim2], fwd, emptyroom, tstop=[0.2, 0.2], normalize='l2', mu=0.0019444, n_iter=3, \
+                                                                                                          n_iterc=3, n_iterf=10)
     # check scaling
     assert model._stim_baseline[0] == stim.mean()
     assert model._stim_scaling[0] == stim.std()
