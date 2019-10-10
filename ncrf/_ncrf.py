@@ -14,7 +14,7 @@ DEFAULT_MUs = np.logspace(-3, -1, 7)
 def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
              n_iter=10, n_iterc=10, n_iterf=100, normalize=False, in_place=False,
              mu='auto', tol=1e-3, verbose=False, n_splits=3, n_workers=None,
-             use_ES=False):
+             use_ES=False, do_post_normalization=True):
     """One shot function for cortical TRF localization
 
     Estimate both TRFs and source variance from the observed MEG data by solving
@@ -77,6 +77,9 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
         use estimation stability criterion _[2] to choose the best ``mu``. (False, by default)
         ..[2] Lim, Chinghway, and Bin Yu. "Estimation stability with cross-validation (ESCV)."
         Journal of Computational and Graphical Statistics 25.2 (2016): 464-492.
+    do_post_normalization : Boolean (optional)
+        scales covariate matrices of different predictor variables by spectral norms to
+        equalize their spectral spread (=1). (True, by default)
 
     Returns
     -------
@@ -174,6 +177,11 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
         if not in_place:
             ss = [s.copy() for s in ss]
         ds.add_data(r, ss)
+
+    # import ipdb; ipdb.set_trace()
+    if do_post_normalization:
+        ds.post_normalization()
+    # import ipdb; ipdb.set_trace()
 
     # noise covariance
     if isinstance(noise, NDVar):
