@@ -241,10 +241,11 @@ class REG_Data:
         if tstart != 0:
             raise NotImplementedError("tstart != 0 is not implemented")
         self.tstart = tstart
-        self.tstop = tstop if isinstance(tstop, collections.Sequence) else [tstop]
+        self.tstop = tstop if isinstance(tstop, collections.abc.Sequence) else [tstop]
         self.nlevel = nlevel
         self.s_baseline = baseline
         self.s_scaling = scaling
+        self.s_normalization = []
         self.meg = []
         self.covariates = []
         self.tstep = None
@@ -349,6 +350,7 @@ class REG_Data:
             # Mind the normalization
             i += l
         self._n_predictor_variables = len(covariates)
+        self.s_normalization.append([linalg.norm(x, 2) for x in covariates])
 
         x = np.concatenate(covariates, axis=1).astype(np.float64)
         self.covariates.append(x)
@@ -392,7 +394,7 @@ class REG_Data:
         obj = type(self).__new__(self.__class__)
         # take care of the copied values from the old_obj
         copy_keys = ['_n_predictor_variables', 'basis', 'filter_length', 'tstart', 'tstep', 'tstop', '_stim_is_single',
-                     '_stim_dims', '_stim_names', 's_baseline', 's_scaling', '_prewhitened', 'gaussian_fwhm']
+                     '_stim_dims', '_stim_names', 's_baseline', 's_scaling', '_prewhitened', 'gaussian_fwhm', 's_normalization']
         obj.__dict__.update({key: self.__dict__[key] for key in copy_keys})
         # keep track of the normalization
         obj._norm_factor = sqrt(len(idx))
@@ -406,6 +408,19 @@ class REG_Data:
             obj.covariates.append(covariate[idx, :] * mul)
 
         return obj
+
+    def post_normalization(self):
+        n_vars = sum(len(dim) if dim else 1 for dim in self._stim_dims)
+        if n_vars > 1:
+            start = 0
+            stim_lens = [len(dim) if dim else 1 for dim in self._stim_dims]
+            basis_lengths = [basis.shape[1] for basis in self.basis]
+            basis_lengths = np.repeat(np.asanyarray(basis_lengths), stim_lens)
+            s_normalization = np.asanyarray(self.s_normalization).mean(axis=0)
+            for basis_length, norm in zip(basis_lengths, s_normalization):
+                for covariates in self.covariates:
+                    covariates[:, start:start+basis_length] /= norm
+                start += basis_length
 
 
 class ncRF:
@@ -465,6 +480,7 @@ class ncRF:
     _stim_names = None
     _stim_baseline = None
     _stim_scaling = None
+    _stim_normalization = None
     _basis = None
     tstart = None
     tstep = None
@@ -515,7 +531,8 @@ class ncRF:
     _PICKLE_ATTRS = ('_basis', '_cv_results', 'mu',  '_name', '_stim_is_single', '_stim_dims', '_stim_names',
                      'noise_covariance', 'n_iter', 'n_iterc', 'n_iterf', 'lead_field', '_data', 'explained_var',
                      '_voxelwise_explained_variance', '_stim_baseline', '_stim_scaling', 'lead_field_scaling',
-                     'residual', 'source', 'space', 'theta', 'tstart', 'tstep', 'tstop', 'gaussian_fwhm')
+                     'residual', 'source', 'space', 'theta', 'tstart', 'tstep', 'tstop', 'gaussian_fwhm',
+                     '_stim_normalization')
 
     def __getstate__(self):
         return {k: getattr(self, k) for k in self._PICKLE_ATTRS}
@@ -525,8 +542,8 @@ class ncRF:
             setattr(self, k, state.get(k, None))
         # make compatible with one tstop case
         if self._stim_dims is not None:
-            self.tstop = self.tstop if isinstance(self.tstop, collections.Sequence) else [self.tstop]
-            self._basis = self._basis if isinstance(self._basis, collections.Sequence) else [self._basis]
+            self.tstop = self.tstop if isinstance(self.tstop, collections.abc.Sequence) else [self.tstop]
+            self._basis = self._basis if isinstance(self._basis, collections.abc.Sequence) else [self._basis]
             if len(self._stim_dims) > 1:
                 if len(self.tstop) != len(self._stim_dims):
                     self.tstop = self.tstop * len(self._stim_dims)
@@ -859,6 +876,7 @@ class ncRF:
         self._stim_names = data._stim_names
         self._stim_baseline = data.s_baseline
         self._stim_scaling = data.s_scaling
+        self._stim_normalization = data.s_normalization
         self._basis = data.basis
         self.tstart = data.tstart
         self.tstep = data.tstep
