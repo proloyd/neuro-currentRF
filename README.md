@@ -47,6 +47,10 @@ For more options, please look at the docstring. The learned TRF, `h` can be retr
 h = model.h
 ```
 
+**New !!!** 
+
+Tutorial on real dataset is now available [here](https://github.com/proloyd/neuro-currentRF/wiki/NCRF-tutorial).
+
 ## Results
 We applied the algorithm on a subset of MEG data collected from 17 adults (aged 18-27 years) under an auditory task described in the papers. In short, during the task, the participants listened to `1 min` long segments from an audio-book recording of [The Legend of Sleepy Hollow by Washington Irving](https://librivox.org/the-legend-of-sleepy-hollow-by-washington-irving/), narrated by a male speaker. We consider localizing the TRFs using a total of `6 min` data from each participant. MNE-python 0.14 was used in pre-processing the raw data to automatically detect and discard flat channels, remove  extraneous artifacts, and to band-pass filter the data in the range `1 - 80 Hz`. The six `1 min` long data epochs were then down-sampled to `200 Hz`. As the stimulus variable, we used the speech envelope reflecting the momentary acoustic power, by averaging the auditory spectrogram representation (generated using a model of the 
 auditory periphery) across the frequency bands, sampled at `200 Hz`.  A volume source space for individual subjects was defined on a 3D regular grid with a resolution of `7 mm` in each direction. The lead-field matrix was then computed by placing free orientation virtual dipoles on the resulting `3322` grid points. The consistent components of our estimated `1 s`-long 3D TRFs across all `17` subjects looks like following:
