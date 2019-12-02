@@ -26,7 +26,7 @@ import logging
 _R_tol = np.finfo(np.float64).eps
 
 
-def gaussian_basis(nlevel, span):
+def gaussian_basis(nlevel, span, stds=8.5):
     """Construct Gabor basis for the TRFs.
 
     Parameters
@@ -42,7 +42,8 @@ def gaussian_basis(nlevel, span):
     """
     x = span
     means = np.linspace(x[-1] / nlevel, x[-1] * (1 - 1 / nlevel), num=nlevel - 1)
-    stds = 8.5
+    # stds = 8.5
+    print(f'Using gaussian std = {stds}')
     W = []
 
     for mean in means:
@@ -233,7 +234,7 @@ class REG_Data:
     _n_predictor_variables = 1
     _prewhitened = None
 
-    def __init__(self, tstart, tstop, nlevel=1, baseline=None, scaling=None, stim_is_single=None):
+    def __init__(self, tstart, tstop, nlevel=1, baseline=None, scaling=None, stim_is_single=None, gaussian_fwhm=20.0):
         if tstart != 0:
             raise NotImplementedError("tstart != 0 is not implemented")
         self.tstart = tstart
@@ -251,6 +252,7 @@ class REG_Data:
         self._stim_dims = None
         self._stim_names = None
         self.sensor_dim = None
+        self.gaussian_fwhm = gaussian_fwhm
 
     def add_data(self, meg, stim):
         """Add sensor measurements and predictor variables for one trial
@@ -304,7 +306,8 @@ class REG_Data:
             self.filter_length = stop - start + 1
             # basis
             x = np.linspace(int(round(1000*self.tstart)), int(round(1000*self.tstop)), self.filter_length)
-            self.basis = gaussian_basis(int(round((self.filter_length-1)/self.nlevel)), x)
+            stds = self.gaussian_fwhm / (2 * (2 * np.log(2)) ** 0.5)
+            self.basis = gaussian_basis(int(round((self.filter_length-1)/self.nlevel)), x, stds)
             # stimuli
             self._stim_dims = stim_dims
             self._stim_names = [x.name for x in stims]
@@ -373,7 +376,7 @@ class REG_Data:
         obj = type(self).__new__(self.__class__)
         # take care of the copied values from the old_obj
         copy_keys = ['_n_predictor_variables', 'basis', 'filter_length', 'tstart', 'tstep', 'tstop', '_stim_is_single',
-                     '_stim_dims', '_stim_names', 's_baseline', 's_scaling', '_prewhitened']
+                     '_stim_dims', '_stim_names', 's_baseline', 's_scaling', '_prewhitened', 'gaussian_fwhm']
         obj.__dict__.update({key: self.__dict__[key] for key in copy_keys})
         # keep track of the normalization
         obj._norm_factor = sqrt(len(idx))
@@ -455,6 +458,7 @@ class ncRF:
     residual = None
     mu = None
     theta = None
+    gaussian_fwhm = None
 
     def __init__(self, lead_field, noise_covariance, n_iter=30, n_iterc=10, n_iterf=100):
         if lead_field.has_dim('space'):
@@ -487,7 +491,7 @@ class ncRF:
     def __copy__(self):
         obj = type(self).__new__(self.__class__)
         copy_keys = ['lead_field', 'lead_field_scaling', 'source', 'space', 'sensor', '_whitening_filter',
-                     'noise_covariance', 'n_iter', 'n_iterc', 'n_iterf', 'eta', 'init_sigma_b']
+                     'noise_covariance', 'n_iter', 'n_iterc', 'n_iterf', 'eta', 'init_sigma_b', 'gaussian_fwhm']
         for key in copy_keys:
             obj.__dict__.update({key: self.__dict__.get(key, None)})
         return obj
@@ -495,7 +499,7 @@ class ncRF:
     _PICKLE_ATTRS = ('_basis', '_cv_results', 'mu',  '_name', '_stim_is_single', '_stim_dims', '_stim_names',
                      'noise_covariance', 'n_iter', 'n_iterc', 'n_iterf', 'lead_field', '_data', 'explained_var',
                      '_voxelwise_explained_variance', '_stim_baseline', '_stim_scaling', 'lead_field_scaling',
-                     'residual', 'source', 'space', 'theta', 'tstart', 'tstep', 'tstop')
+                     'residual', 'source', 'space', 'theta', 'tstart', 'tstep', 'tstop', 'gaussian_fwhm')
 
     def __getstate__(self):
         return {k: getattr(self, k) for k in self._PICKLE_ATTRS}
@@ -513,6 +517,8 @@ class ncRF:
                         for columns in items.T:
                             _cv_results.append(CVResult(*columns[[0, 1, 4, 2, 3]]))
                 setattr(self, '_cv_results', _cv_results)
+        if self.gaussian_fwhm is None:
+            self.gaussian_fwhm = 20.0  # the default value
 
     def _prewhiten(self):
         wf = _inv_sqrtm(self.noise_covariance)
@@ -832,6 +838,7 @@ class ncRF:
         self.tstart = data.tstart
         self.tstep = data.tstep
         self.tstop = data.tstop
+        self.gaussian_fwhm = data.gaussian_fwhm
 
     def _construct_f(self, data):
         """creates instances of objective function and its gradient to be passes to the FASTA algorithm

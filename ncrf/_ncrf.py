@@ -15,7 +15,7 @@ DEFAULT_MUs = np.logspace(-3, -1, 7)
 def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
              n_iter=10, n_iterc=10, n_iterf=100, normalize=False, in_place=False,
              mu='auto', tol=1e-3, verbose=False, n_splits=3, n_workers=None,
-             use_ES=False):
+             use_ES=False, gaussian_fwhm=20.0):
     """One shot function for cortical TRF localization
 
     Estimate both TRFs and source variance from the observed MEG data by solving
@@ -78,6 +78,12 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
         use estimation stability criterion _[2] to choose the best ``mu``. (False, by default)
         ..[2] Lim, Chinghway, and Bin Yu. "Estimation stability with cross-validation (ESCV)."
         Journal of Computational and Graphical Statistics 25.2 (2016): 464-492.
+    gaussian_fwhm : float (optional)
+        specifies the full width half maximum (fwmh) for the Gaussian kernel (used as elements of
+        the time basis), the default is 20 ms. The standard deviation (std) is related to the
+        fwmh as following:
+        .. math::
+            std = fwhm / (2 * (sqrt(2 * log(2))))
 
     Returns
     -------
@@ -170,7 +176,7 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
         raise TypeError(f"normalize={normalize!r}, need bool or str")
 
     # Call `REG_Data.add_data` once for each contiguous segment of MEG data
-    ds = REG_Data(tstart, tstop, nlevels, s_baseline, s_scale, stim_is_single)
+    ds = REG_Data(tstart, tstop, nlevels, s_baseline, s_scale, stim_is_single, gaussian_fwhm)
     for r, ss in zip(meg_trials, stim_trials):
         if not in_place:
             ss = [s.copy() for s in ss]
