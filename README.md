@@ -1,3 +1,7 @@
+**Wanna try ncRFs for your data???** 
+
+Tutorial on real dataset is now available [here](https://github.com/proloyd/neuro-currentRF/wiki/NCRF-tutorial).
+
 # ncRF   
 The magnetoencephalography (MEG) response to continuous auditory stimuli, such as speech, is commonly described using a linear filter, the auditory temporal response function (TRF). Though components of the sensor level TRFs have been well characterized, the cortical distributions of  the underlying neural responses are not well-understood. In our recent work, we provide a unified framework for determining the TRFs of neural sources directly from the MEG data, by integrating the TRF and distributed forward  source models into one, and casting the joint estimation task as a Bayesian optimization problem. Though the resulting  problem emerges as non-convex, we propose efficient solutions that leverage recent advances in evidence maximization. For more details please refer to [1], [2].
 
@@ -46,10 +50,6 @@ For more options, please look at the docstring. The learned TRF, `h` can be retr
 ```python
 h = model.h
 ```
-
-**New !!!** 
-
-Tutorial on real dataset is now available [here](https://github.com/proloyd/neuro-currentRF/wiki/NCRF-tutorial).
 
 ## Results
 We applied the algorithm on a subset of MEG data collected from 17 adults (aged 18-27 years) under an auditory task described in the papers. In short, during the task, the participants listened to `1 min` long segments from an audio-book recording of [The Legend of Sleepy Hollow by Washington Irving](https://librivox.org/the-legend-of-sleepy-hollow-by-washington-irving/), narrated by a male speaker. We consider localizing the TRFs using a total of `6 min` data from each participant. MNE-python 0.14 was used in pre-processing the raw data to automatically detect and discard flat channels, remove  extraneous artifacts, and to band-pass filter the data in the range `1 - 80 Hz`. The six `1 min` long data epochs were then down-sampled to `200 Hz`. As the stimulus variable, we used the speech envelope reflecting the momentary acoustic power, by averaging the auditory spectrogram representation (generated using a model of the 
