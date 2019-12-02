@@ -153,8 +153,8 @@ def _inv_sqrtm(m, return_eig=False):
     y = np.zeros(e.shape)
     y[ind] = 1 / e[ind]
     if return_eig:
-        return np.matmul(v * np.sqrt(y), v.T.conj()), y[ind]
-    return np.matmul(v * np.sqrt(y), v.T.conj())
+        return np.sqrt(y)[:, None] * v.T.conj(), y[ind]
+    return np.sqrt(y)[:, None] * v.T.conj()
 
 
 def _compute_gamma_i(z, x):
