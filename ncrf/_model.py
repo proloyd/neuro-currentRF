@@ -440,6 +440,7 @@ class ncRF:
     _name = 'cTRFs estimator'
     _cv_results = None
     # Attributes to be assigned after fit:
+    _data = None
     _stim_is_single = None
     _stim_dims = None
     _stim_names = None
@@ -490,7 +491,7 @@ class ncRF:
         return obj
 
     _PICKLE_ATTRS = ('_basis', '_cv_results', 'mu',  '_name', '_stim_is_single', '_stim_dims', '_stim_names',
-                     'noise_covariance', 'n_iter', 'n_iterc', 'n_iterf', 'lead_field',
+                     'noise_covariance', 'n_iter', 'n_iterc', 'n_iterf', 'lead_field', '_data', 'explained_var',
                      '_stim_baseline', '_stim_scaling', 'lead_field_scaling', 'residual', 'source', 'space', 'theta', 'tstart', 'tstep', 'tstop')
 
     def __getstate__(self):
@@ -627,16 +628,19 @@ class ncRF:
 
                 # compute sigma_b for the next iteration
                 sigma_b = self.noise_covariance.copy()
+                # tempx = lhat.T @ ytilde
 
                 for i in range(len(self.source)):
                     if dc > 1:
                         # update Xi
-                        x = np.matmul(gamma[i], np.matmul(ytilde.T, lhat[:, i * dc:(i + 1) * dc]).T)
+                        x = np.matmul(gamma[i], np.matmul(lhat[:, i * dc:(i + 1) * dc].T, ytilde))
+                        # x = np.matmul(gamma[i], tempx[i * dc:(i + 1) * dc, :])
                         # update Zi
                         z = np.matmul(lhat[:, i * dc:(i + 1) * dc].T, lhat[:, i * dc:(i + 1) * dc])
                     else:
                         # update Xi
-                        x = gamma[i] * np.matmul(ytilde.T, lhat[:, i]).T
+                        x = gamma[i] * lhat[:, i].T.dot(ytilde)
+                        # x = gamma[i] * tempx[i]
                         # update Zi
                         z = inner1d(lhat[:, i], lhat[:, i])
                         # z = np.einsum('i,i->',lhat[:, i], lhat[:, i])
@@ -648,7 +652,7 @@ class ncRF:
                         # gamma[i] = sqrt(np.einsum('i,i->',x, x)) / np.real(sqrt(z))
                         # gamma[i] = sqrt((x ** 2).sum()) / np.real(sqrt(z))
                     elif dc == 3:
-                            _compute_gamma_ip(z, x, gamma[i])
+                        _compute_gamma_ip(z, x, gamma[i])
                     else:
                         gamma[i] = _compute_gamma_i(z, x)
 
@@ -737,7 +741,6 @@ class ncRF:
             best_cv = min(cv_results, key=attrgetter('cross_fit'))
             mu = best_cv.mu
             if use_ES:
-                # FIXME
                 cv_results_ = sorted(self._cv_results, key=attrgetter('mu'))
                 if mu == cv_results[-1].mu:
                     logger.info(f'\nCVmu is {best_cv.mu}: could not find mu based on estimation' \
@@ -756,7 +759,7 @@ class ncRF:
                             except IndexError:
                                 best_es = None
                     if best_es is None:
-                        logger.warning(f'\nNo ES minima found: could not find mu based on estimation' 
+                        logger.warning(f'\nNo ES minima found: could not find mu based on estimation'
                                        f' stability criterion. '
                                        f'\nContinuing with cross-validation only.')
                     else:
@@ -808,6 +811,12 @@ class ncRF:
             logger.debug(f'{myname}:{i} \t {self.objective_vals[-1]} \t {self.err[-1]*100}')
 
         self.residual = self.eval_obj(data)
+        self.explained_var = self.compute_explained_variance(data)
+        self._copy_from_data(data)
+        self._data = data  # save the data for further use
+
+    def _copy_from_data(self, data):
+        "copies relevant fields from data"
         self._stim_is_single = data._stim_is_single
         self._stim_dims = data._stim_dims
         self._stim_names = data._stim_names
@@ -902,7 +911,7 @@ class ncRF:
             except np.linalg.LinAlgError:
                 Lc, e = _inv_sqrtm(sigma_b, return_eig=True)
                 y = np.matmul(Lc, yhat)
-                logdet = - np.log(np.diag(e)).sum()
+                logdet = - np.log(e).sum()
 
             residual += 0.5 * (y ** 2).sum() + logdet
 
@@ -964,6 +973,24 @@ class ncRF:
             l2 = l2 + 0.5 * (y ** 2).sum()  # + np.log(np.diag(L)).sum()
 
         return l2 / len(data)
+
+    def compute_explained_variance(self, data):
+        """evaluates explained_variance
+
+        Parameters
+        ---------
+        data : REG_Data instance
+
+        Returns
+        -------
+            float
+        """
+        temp = 0
+        for key, (meg, covariate) in enumerate(data):
+            y = meg - np.matmul(np.matmul(self.lead_field, self.theta), covariate.T)
+            temp += (y * y).sum() / (meg * meg).sum()  # + np.log(np.diag(L)).sum()
+
+        return temp / len(data)
 
     @LazyProperty
     def h_scaled(self):
