@@ -44,15 +44,14 @@ def test_ncrf():
     model = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu=0.0019444, n_iter=3, n_iterc=3,
                      n_iterf=10, do_post_normalization=False)
     # check residual and explained var
-    assert model.explained_var == pytest.approx(1 - 0.9941346037905334, rel=0.001)
-    assert model.voxelwise_explained_variance.sum() == pytest.approx(0.08444086532940269, rel=0.001)
-    assert model.residual == pytest.approx(172.714, 0.001)
-    assert model.gaussian_fwhm == 20.0
+    assert model.explained_var == pytest.approx(0.00641890144769941, rel=0.001)
+    assert model.voxelwise_explained_variance.sum() == pytest.approx(0.08261162457414245, rel=0.001)
+    assert model.residual == pytest.approx(178.512, 0.001)
     # check scaling
     stim_baseline = stim.mean()
     assert model._stim_baseline[0] == stim_baseline
     assert model._stim_scaling[0] == (stim - stim_baseline).abs().mean()
-    assert model.h.norm('time').norm('source').norm('space') == pytest.approx(6.043e-10, rel=0.001)
+    assert model.h.norm('time').norm('source').norm('space') == pytest.approx(6.601677e-10, rel=0.001)
 
     # test persistence
     model_2 = pickle.loads(pickle.dumps(model, pickle.HIGHEST_PROTOCOL))
@@ -74,7 +73,7 @@ def test_ncrf():
     # check scaling
     assert model._stim_baseline[0] == stim.mean()
     assert model._stim_scaling[0] == stim.std()
-    assert model.h[0].norm('time').norm('source').norm('space') == pytest.approx(4.732e-10, 0.001)
+    assert model.h[0].norm('time').norm('source').norm('space') == pytest.approx(7.0088e-10, rel=0.001)
 
     # cross-validation
     model = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu='auto', n_iter=1, n_iterc=2, n_iterf=2,

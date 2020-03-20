@@ -24,7 +24,7 @@ from .dsyevh3C import compute_gamma_c
 
 import logging
 
-_R_tol = np.finfo(np.float64).eps
+_R_tol = np.finfo(np.float64).eps * 1e2
 
 
 def gaussian_basis(nlevel, span, stds=8.5):
@@ -153,11 +153,11 @@ def _inv_sqrtm(m, return_eig=False):
     e = e.real
     tol = _R_tol * e.max()
     ind = (e > tol)
-    y = np.zeros(e.shape)
-    y[ind] = 1 / e[ind]
+    y = np.zeros((e.shape[0], 1))
+    y[ind, 0] = 1 / e[ind]
     if return_eig:
-        return np.sqrt(y)[:, None] * v.T.conj(), y[ind]
-    return np.sqrt(y)[:, None] * v.T.conj()
+        return np.sqrt(y) * v.T.conj(), np.squeeze(y[ind])
+    return np.sqrt(y) * v.T.conj()
 
 
 def _compute_gamma_i(z, x):
@@ -361,6 +361,8 @@ class REG_Data:
             for i, (meg, _) in enumerate(self):
                 self.meg[i] = np.dot(whitening_filter, meg)
             self._prewhitened = True
+        else:
+            pass
 
     def _precompute(self):
         """Called by ncRF instance"""
@@ -443,15 +445,19 @@ class ncRF:
     Attributes
     ----------
     h : NDVar | tuple of NDVar
-        The temporal response function. Whether ``h`` is an NDVar or a tuple of
+        the neuro-current response function. Whether ``h`` is an NDVar or a tuple of
         NDVars depends on whether the ``x`` parameter to :func:`ncrf` was
         an NDVar or a sequence of NDVars.
+    explained_var: float
+        fraction of total variance explained by ncrfs
+    voxelwise_explained_variance: NDVar
+        fractions of total variance explained by individual voxel ncrf
     Gamma: list
         individual source covariance matrices
     sigma_b: list of ndarray
         data covariances under the model
     theta: ndarray
-        trf coefficients over Gabor basis.
+        ncrf coefficients over Gabor basis.
     residual : float | NDVar
         The fit error, i.e. the result of the ``eval_obj`` error function on the
         final fit.
@@ -532,7 +538,7 @@ class ncRF:
                      'noise_covariance', 'n_iter', 'n_iterc', 'n_iterf', 'lead_field', '_data', 'explained_var',
                      '_voxelwise_explained_variance', '_stim_baseline', '_stim_scaling', 'lead_field_scaling',
                      'residual', 'source', 'space', 'theta', 'tstart', 'tstep', 'tstop', 'gaussian_fwhm',
-                     '_stim_normalization')
+                     '_stim_normalization', '_whitening_filter')
 
     def __getstate__(self):
         return {k: getattr(self, k) for k in self._PICKLE_ATTRS}
@@ -566,7 +572,8 @@ class ncRF:
         wf = _inv_sqrtm(self.noise_covariance)
         self._whitening_filter = wf
         self.lead_field = np.matmul(wf, self.lead_field)
-        self.noise_covariance = np.eye(self.lead_field.shape[0], dtype=np.float64)
+        # self.noise_covariance = np.eye(self.lead_field.shape[0], dtype=np.float64)
+        self.noise_covariance = wf.dot(self.noise_covariance).dot(wf.T)
         self.lead_field_scaling = linalg.norm(self.lead_field, 2)
         self.lead_field /= self.lead_field_scaling
 
@@ -653,6 +660,7 @@ class ncRF:
             Cb = np.matmul(y, y.T)  # empirical data covariance
 
             try:
+                raise np.linalg.LinAlgError
                 yhat = linalg.cholesky(Cb, lower=True)
             except np.linalg.LinAlgError:
                 hi = y.shape[0] - 1
@@ -660,10 +668,12 @@ class ncRF:
                 e, v = linalg.eigh(Cb, eigvals=(lo, hi))
                 tol = e[-1] * _R_tol
                 indices = e > tol
-                yhat = v[:, indices] * np.sqrt(e[indices])
+                yhat = v[:, indices] * np.sqrt(e[indices])[None, :]
 
-            gamma = self.Gamma[key].copy()
-            sigma_b = self.Sigma_b[key].copy()
+            # gamma = self.Gamma[key].copy()
+            # sigma_b = self.Sigma_b[key].copy()
+            gamma = copy.deepcopy(self.eta[key])
+            sigma_b = self.init_sigma_b[key].copy()
 
             # champagne iterations
             for it in range(n_iterc):
@@ -678,7 +688,7 @@ class ncRF:
                     ytilde = np.matmul(Lc, yhat)
 
                 # compute sigma_b for the next iteration
-                sigma_b = self.noise_covariance.copy()
+                sigma_b[:] = self.noise_covariance[:]
                 # tempx = lhat.T @ ytilde
 
                 for i in range(len(self.source)):
@@ -846,12 +856,14 @@ class ncRF:
         # run iterations
         for i in iter_o:
             funct, grad_funct = self._construct_f(data)
+            logger.debug(f"Before FASTA:{funct(self.theta)}")
             Theta = Fasta(funct, g_funct, grad_funct, prox_g, n_iter=self.n_iterf)
             Theta.learn(theta)
 
             self.err.append(self._residual(theta, Theta.coefs_))
             theta = Theta.coefs_
             self.theta = theta
+            logger.debug(f"After FASTA: {funct(self.theta)}")
 
             if self.err[-1] < tol:
                 break
@@ -896,6 +908,7 @@ class ncRF:
         bbts = []
         for i in range(len(data)):
             try:
+                raise np.linalg.LinAlgError
                 L = linalg.cholesky(self.Sigma_b[i], lower=True)
                 leadfields.append(linalg.solve(L, self.lead_field))
                 bEs.append(linalg.solve(L, data._bE[i]))
@@ -920,11 +933,11 @@ class ncRF:
         def funct(x):
             fval = 0.0
             for i in range(len(data)):
-                fval += f(leadfields[i], x, bbts[i], bEs[i], data._EtE[i])
+                fval = fval + f(leadfields[i], x, bbts[i], bEs[i], data._EtE[i])
             return fval
 
         def grad_funct(x):
-            grad = gradf(leadfields[0], x, bEs[0], data._EtE[0])
+            grad = gradf(leadfields[0], x, bEs[0], data._EtE[0]).astype(np.float64)
             for i in range(1, len(data)):
                 grad += gradf(leadfields[i], x, bEs[i], data._EtE[i])
             return grad
@@ -1006,11 +1019,19 @@ class ncRF:
         -------
             float
         """
+        logger = logging.getLogger('NCRF: Explained Variance')
         temp = 0
         for key, (meg, covariate) in enumerate(data):
-            y = meg - np.matmul(np.matmul(self.lead_field, self.theta), covariate.T)
-            temp += (y * y).sum() / (meg * meg).sum()  # + np.log(np.diag(L)).sum()
+            # W = _inv_sqrtm(self.Sigma_b[key])
+            # W_meg = W @ meg
+            # W_leadfield = W @ self.lead_field
+            W_meg = meg
+            W_leadfield = self.lead_field
+            y = W_meg - np.matmul(np.matmul(W_leadfield, self.theta), covariate.T)
+            # temp += (y * y).sum() / (W_meg * W_meg).sum()  # + np.log(np.diag(L)).sum()
+            temp += np.nansum(np.var(y, axis=1) / np.var(W_meg, axis=1)) / y.shape[0]
 
+        logger.debug(f'{self.mu}: {1 - temp / len(data)}')
         return 1 - temp / len(data)
 
     def _compute_voxelwise_explained_variance(self, data):
@@ -1027,17 +1048,23 @@ class ncRF:
         temp = np.zeros(len(self.source))
         theta = self.theta.copy()
         for key, (meg, covariate) in enumerate(data):
-            total_var = (meg * meg).sum()
-            y = meg - np.matmul(np.matmul(self.lead_field, theta), covariate.T)
-            explained_variance = (y * y).sum()
+            # W = _inv_sqrtm(self.Sigma_b[key])
+            # W_meg = W @ meg
+            # W_leadfield = W @ self.lead_field
+            W_meg = meg
+            W_leadfield = self.lead_field
+            total_var = np.var(W_meg, axis=1)
+            y = W_meg - np.matmul(np.matmul(W_leadfield, theta), covariate.T)
+            explained_variance = np.var(y, axis=1)
             for i, _ in enumerate(self.source):
                 theta[:] = self.theta[:]
                 if self.space is None:
                     theta[i] = 0
                 else:
                     theta[i*len(self.space):(i+1)*len(self.space)] = 0
-                y = meg - np.matmul(np.matmul(self.lead_field, theta), covariate.T)
-                temp[i] += ((y * y).sum() - explained_variance) / total_var  # + np.log(np.diag(L)).sum()
+                y = W_meg - np.matmul(np.matmul(W_leadfield, theta), covariate.T)
+                temp[i] += np.nansum((np.var(y, axis=1) - explained_variance) / total_var) / W_meg.shape[0]  # + np.log(
+                # np.diag(L)).sum()
 
         return temp / len(data)
 
