@@ -440,15 +440,19 @@ class ncRF:
     Attributes
     ----------
     h : NDVar | tuple of NDVar
-        The temporal response function. Whether ``h`` is an NDVar or a tuple of
+        the neuro-current response function. Whether ``h`` is an NDVar or a tuple of
         NDVars depends on whether the ``x`` parameter to :func:`ncrf` was
         an NDVar or a sequence of NDVars.
+    explained_var: float
+        fraction of total variance explained by ncrfs
+    voxelwise_explained_variance: NDVar
+        fractions of total variance explained by individual voxel ncrf
     Gamma: list
         individual source covariance matrices
     sigma_b: list of ndarray
         data covariances under the model
     theta: ndarray
-        trf coefficients over Gabor basis.
+        ncrf coefficients over Gabor basis.
     residual : float | NDVar
         The fit error, i.e. the result of the ``eval_obj`` error function on the
         final fit.
