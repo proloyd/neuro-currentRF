@@ -42,7 +42,8 @@ def test_ncrf():
     # 1 stimulus
     model = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu=0.0019444, n_iter=3, n_iterc=3, n_iterf=10)
     # check residual and explained var
-    assert model.explained_var == pytest.approx(0.9941346037905341, rel=0.001)
+    assert model.explained_var == pytest.approx(1 - 0.9941346037905341, rel=0.001)
+    assert model.voxelwise_explained_variance.sum() == pytest.approx(0.08444086532938956, rel=0.001)
     assert model.residual == pytest.approx(172.714, 0.001)
     # check scaling
     stim_baseline = stim.mean()

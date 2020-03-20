@@ -450,6 +450,8 @@ class ncRF:
     tstart = None
     tstep = None
     tstop = None
+    explained_var = None
+    _voxelwise_explained_variance = None
     residual = None
     mu = None
     theta = None
@@ -492,7 +494,8 @@ class ncRF:
 
     _PICKLE_ATTRS = ('_basis', '_cv_results', 'mu',  '_name', '_stim_is_single', '_stim_dims', '_stim_names',
                      'noise_covariance', 'n_iter', 'n_iterc', 'n_iterf', 'lead_field', '_data', 'explained_var',
-                     '_stim_baseline', '_stim_scaling', 'lead_field_scaling', 'residual', 'source', 'space', 'theta', 'tstart', 'tstep', 'tstop')
+                     '_voxelwise_explained_variance', '_stim_baseline', '_stim_scaling', 'lead_field_scaling',
+                     'residual', 'source', 'space', 'theta', 'tstart', 'tstep', 'tstop')
 
     def __getstate__(self):
         return {k: getattr(self, k) for k in self._PICKLE_ATTRS}
@@ -665,7 +668,8 @@ class ncRF:
             end = time.time()
             logger.debug(f'{key} \t {end-start}')
 
-    def fit(self, data, mu='auto', do_crossvalidation=False, tol=1e-5, verbose=False, use_ES=False, mus=None, n_splits=None, n_workers=None):
+    def fit(self, data, mu='auto', do_crossvalidation=False, tol=1e-5, verbose=False, use_ES=False, mus=None, n_splits=None, n_workers=None,
+            compute_explained_variance=False):
         """cTRF estimator implementation
 
         Estimate both TRFs and source variance from the observed MEG data by solving
@@ -811,8 +815,10 @@ class ncRF:
             logger.debug(f'{myname}:{i} \t {self.objective_vals[-1]} \t {self.err[-1]*100}')
 
         self.residual = self.eval_obj(data)
-        self.explained_var = self.compute_explained_variance(data)
         self._copy_from_data(data)
+        self.explained_var = self.compute_explained_variance(data)
+        if compute_explained_variance:
+            self._voxelwise_explained_variance = self._compute_voxelwise_explained_variance(data)
         self._data = data  # save the data for further use
 
     def _copy_from_data(self, data):
@@ -955,7 +961,43 @@ class ncRF:
             y = meg - np.matmul(np.matmul(self.lead_field, self.theta), covariate.T)
             temp += (y * y).sum() / (meg * meg).sum()  # + np.log(np.diag(L)).sum()
 
+        return 1 - temp / len(data)
+
+    def _compute_voxelwise_explained_variance(self, data):
+        """evaluates explained_variance
+
+        Parameters
+        ---------
+        data : REG_Data instance
+
+        Returns
+        -------
+            float
+        """
+        temp = np.zeros(len(self.source))
+        theta = self.theta.copy()
+        for key, (meg, covariate) in enumerate(data):
+            total_var = (meg * meg).sum()
+            y = meg - np.matmul(np.matmul(self.lead_field, theta), covariate.T)
+            explained_variance = (y * y).sum()
+            for i, _ in enumerate(self.source):
+                theta[:] = self.theta[:]
+                if self.space is None:
+                    theta[i] = 0
+                else:
+                    theta[i*len(self.space):(i+1)*len(self.space)] = 0
+                y = meg - np.matmul(np.matmul(self.lead_field, theta), covariate.T)
+                temp[i] += ((y * y).sum() - explained_variance) / total_var  # + np.log(np.diag(L)).sum()
+
         return temp / len(data)
+
+    @LazyProperty
+    def voxelwise_explained_variance(self):
+        """voxelwise_explained_variance"""
+        if self._voxelwise_explained_variance is None:
+            return None
+        else:
+            return NDVar(self._voxelwise_explained_variance, self.source)
 
     @LazyProperty
     def h_scaled(self):
