@@ -875,7 +875,7 @@ class ncRF:
 
         return funct, grad_funct
 
-    def eval_obj(self, data):
+    def eval_obj(self, data, return_wl2=False):
         """evaluates objective function
 
         Parameters
@@ -888,6 +888,8 @@ class ncRF:
             float
         """
         residual = 0
+        ll2 = 0
+        logdet = 0
         for key, (meg, covariate) in enumerate(data):
             y = meg - np.matmul(np.matmul(self.lead_field, self.theta), covariate.T)
             Cb = np.matmul(y, y.T)  # empirical data covariance
@@ -907,54 +909,17 @@ class ncRF:
             try:
                 Lc = linalg.cholesky(sigma_b, lower=True)
                 y = linalg.solve(Lc, yhat)
-                logdet = np.log(np.diag(Lc)).sum()
+                logdet_ = np.log(np.diag(Lc)).sum()
             except np.linalg.LinAlgError:
                 Lc, e = _inv_sqrtm(sigma_b, return_eig=True)
                 y = np.matmul(Lc, yhat)
-                logdet = - np.log(e).sum()
+                logdet_ = -np.log(e).sum()
 
-            residual += 0.5 * (y ** 2).sum() + logdet
-
-        return residual / len(data)
-
-    def eval_wl2(self, data):
-        """evaluates whole cross-validation metric (used by CV only)
-
-        Parameters
-        ---------
-        data : REG_Data instance
-
-        Returns
-        -------
-            float
-        """
-        ll = 0
-        for key, (meg, covariate) in enumerate(data):
-            y = meg - np.matmul(np.matmul(self.lead_field, self.theta), covariate.T)
-            Cb = np.matmul(y, y.T)  # empirical data covariance
-            try:
-                yhat = linalg.cholesky(Cb, lower=True)
-            except np.linalg.LinAlgError:
-                hi = y.shape[0] - 1
-                lo = max(y.shape[0] - y.shape[1], 0)
-                e, v = linalg.eigh(Cb, eigvals=(lo, hi))
-                tol = e[-1] * _R_tol
-                indices = e > tol
-                yhat = v[:, indices] * np.sqrt(e[indices])
-
-            # L = linalg.cholesky(self.Sigma_b[key], lower=True)
-            # y = linalg.solve(L, yhat)
-            sigma_b = self.Sigma_b[key]
-            try:
-                Lc = linalg.cholesky(sigma_b, lower=True)
-                y = linalg.solve(Lc, yhat)
-            except np.linalg.LinAlgError:
-                Lc = _inv_sqrtm(sigma_b)
-                y= np.matmul(Lc, yhat)
-
-            ll += 0.5 * (y ** 2).sum()  # + np.log(np.diag(L)).sum()
-
-        return ll / len(data)
+            ll2 += 0.5 * (y ** 2).sum()
+            logdet += logdet_
+        if return_wl2:
+            return (ll2 + logdet) / len(data), ll2 / len(data)
+        return (ll2 + logdet) / len(data)
 
     def eval_l2(self, data):
         """evaluates Theta cross-validation metric (used by CV only)
@@ -970,7 +935,7 @@ class ncRF:
         l2 = 0
         for key, (meg, covariate) in enumerate(data):
             y = meg - np.matmul(np.matmul(self.lead_field, self.theta), covariate.T)
-            l2 = l2 + 0.5 * (y ** 2).sum()  # + np.log(np.diag(L)).sum()
+            l2 += 0.5 * (y ** 2).sum()  # + np.log(np.diag(L)).sum()
 
         return l2 / len(data)
 
@@ -1120,8 +1085,9 @@ class ncRF:
                 traindata = data.timeslice(train)
                 testdata = data.timeslice(test)
                 model_.fit(traindata, mu, tol=tol, verbose=False)
-                ll.append(model_.eval_wl2(testdata))
-                ll1.append(model_.eval_obj(testdata))
+                obj, wl2 = model_.eval_obj(testdata, True)
+                ll.append(wl2)
+                ll1.append(obj)
                 ll2.append(model_.eval_l2(testdata))
 
             time.sleep(0.001)
