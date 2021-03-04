@@ -188,13 +188,19 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
             missing = sorted(chs_data.difference(chs_noise))
             raise NotImplementedError(f"Noise covariance is missing data for sensors {', '.join(missing)}")
         else:
-            assert np.all(ds.sensor_dim.names == chs_both)
+            assert np.all(sorted(ds.sensor_dim.names) == chs_both)
         if len(chs_both) < len(chs_noise):
             index = np.array([noise.ch_names.index(ch) for ch in chs_both])
             noise_cov = noise.data[index[:, np.newaxis], index]
         else:
-            assert noise.ch_names == chs_both
-            noise_cov = noise.data
+            assert sorted(noise.ch_names) == chs_both
+            if noise['diag']:
+                squareMatrix = np.zeros([len(noise.data), len(noise.data)])
+                row, col = np.diag_indices(squareMatrix.shape[0])
+                squareMatrix[row, col] = noise.data
+                noise_cov = squareMatrix
+            else:
+                noise_cov = noise.data
     elif isinstance(noise, np.ndarray):
         n = len(ds.sensor_dim)
         if noise.shape == (n, n):
