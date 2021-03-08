@@ -2,6 +2,7 @@ from typing import List
 import collections
 
 from eelbrain import NDVar
+from eelbrain._utils import natsorted
 from mne import Covariance
 import numpy as np
 
@@ -183,13 +184,11 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
         # check for channel mismatch
         chs_noise = set(noise.ch_names)
         chs_data = set(ds.sensor_dim.names)
-        chs_both = sorted(chs_noise.intersection(chs_data))
+        chs_both = natsorted(chs_noise.intersection(chs_data))
         if len(chs_both) < len(chs_data):
             missing = sorted(chs_data.difference(chs_noise))
             raise NotImplementedError(f"Noise covariance is missing data for sensors {', '.join(missing)}")
-        else:
-            assert np.all(sorted(ds.sensor_dim.names) == chs_both)
-        if len(chs_both) < len(chs_noise):
+        elif len(chs_both) < len(chs_noise) or not np.all(ds.sensor_dim.names == chs_both):
             index = np.array([noise.ch_names.index(ch) for ch in chs_both])
             noise_cov = noise.data[index[:, np.newaxis], index]
         else:
