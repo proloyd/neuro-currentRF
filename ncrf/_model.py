@@ -40,10 +40,11 @@ def gaussian_basis(nlevel, span, stds=8.5):
     -------
         ndarray (Gabor atoms)
     """
+    logger = logging.getLogger(__name__)
     x = span
     means = np.linspace(x[-1] / nlevel, x[-1] * (1 - 1 / nlevel), num=nlevel - 1)
     # stds = 8.5
-    print(f'Using gaussian std = {stds}')
+    logger.info(f'Using gaussian std = {stds}')
     W = []
 
     for mean in means:
