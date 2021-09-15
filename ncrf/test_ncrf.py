@@ -1,13 +1,15 @@
 import os
 import pickle
-from mne.utils import _fetch_file
 from math import log
+import certifi
 from ._ncrf import fit_ncrf
 
 from eelbrain import Categorial, concatenate
 from eelbrain.testing import assert_dataobj_equal
 import pytest
 
+
+os.environ.setdefault('SSL_CERT_FILE', certifi.where())
 
 # web url to fetch the file
 url = "https://ece.umd.edu/~proloy/.datasets/%s.pickled"
@@ -32,6 +34,18 @@ def load(name):
     with open(fname, 'rb') as f:
         v = pickle.load(f)
     return v
+
+
+def _fetch_file(url, fname):
+    import shutil
+    import tempfile
+    import urllib.request
+
+    with urllib.request.urlopen(url) as response:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            shutil.copyfileobj(response, tmp_file)
+    shutil.move(tmp_file.name, fname)
+    return
 
 
 def test_ncrf():
