@@ -6,7 +6,7 @@ channels:
 - conda-forge
 dependencies:
 - numpy <= 1.18
-- python >= 3.8, <3.8.9
+- python >= 3.8
 - eelbrain >= 0.34
 # building
 - setuptools >= 17
