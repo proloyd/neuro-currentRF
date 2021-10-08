@@ -3,19 +3,16 @@ import time
 import copy
 import collections
 from functools import cached_property
+from math import sqrt, log10
+from multiprocessing import current_process
 from operator import attrgetter
-import numpy as np
 
-# Some specialized functions
+from eelbrain import fmtxt, UTS, NDVar
+import numpy as np
 from numpy.core.umath_tests import inner1d
 from scipy import linalg
 from scipy.signal import find_peaks
-from math import sqrt, log10
 from tqdm import tqdm
-from multiprocessing import current_process
-
-# eelbrain imports
-from eelbrain import fmtxt, UTS, NDVar
 
 from ._fastac import Fasta
 from ._crossvalidation import CVResult, crossvalidate
