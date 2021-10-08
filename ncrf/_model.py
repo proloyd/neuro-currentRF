@@ -2,6 +2,7 @@
 import time
 import copy
 import collections
+from functools import cached_property
 from operator import attrgetter
 import numpy as np
 
@@ -15,7 +16,6 @@ from multiprocessing import current_process
 
 # eelbrain imports
 from eelbrain import fmtxt, UTS, NDVar
-from eelbrain._utils import LazyProperty
 
 from ._fastac import Fasta
 from ._crossvalidation import CVResult, crossvalidate
@@ -1068,7 +1068,7 @@ class ncRF:
 
         return temp / len(data)
 
-    @LazyProperty
+    @cached_property
     def voxelwise_explained_variance(self):
         """voxelwise_explained_variance"""
         if self._voxelwise_explained_variance is None:
@@ -1076,7 +1076,7 @@ class ncRF:
         else:
             return NDVar(self._voxelwise_explained_variance, self.source)
 
-    @LazyProperty
+    @cached_property
     def h_scaled(self):
         """h with original stimulus scale restored"""
         if self._stim_scaling is None:
@@ -1086,7 +1086,7 @@ class ncRF:
         else:
             return [h * s for h, s in zip(self.h, self._stim_scaling)]
 
-    @LazyProperty
+    @cached_property
     def h(self):
         """The spatio-temporal response function as (list of) NDVar"""
         n_vars = sum(len(dim) if dim else 1 for dim in self._stim_dims)
