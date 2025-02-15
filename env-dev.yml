@@ -1,12 +1,10 @@
 # Environment for development
 # usage: $ conda env create --file=env-dev.yml
 # to run stats test, install r-ez with $ conda install -c ncil r-ez --no-deps
-name: condaenv
+name: ncrf
 channels:
 - conda-forge
 dependencies:
-- numpy <= 1.18
-- python >= 3.8
 - eelbrain >= 0.34
 # building
 - setuptools >= 17

@@ -9,7 +9,6 @@ from operator import attrgetter
 
 from eelbrain import fmtxt, UTS, NDVar
 import numpy as np
-from numpy.core.umath_tests import inner1d
 from scipy import linalg
 from scipy.signal import find_peaks
 from tqdm import tqdm
@@ -662,7 +661,7 @@ class ncRF:
             except np.linalg.LinAlgError:
                 hi = y.shape[0] - 1
                 lo = max(y.shape[0] - y.shape[1], 0)
-                e, v = linalg.eigh(Cb, eigvals=(lo, hi))
+                e, v = linalg.eigh(Cb, subset_by_index=(lo, hi))
                 tol = e[-1] * _R_tol
                 indices = e > tol
                 yhat = v[:, indices] * np.sqrt(e[indices])[None, :]
@@ -700,15 +699,12 @@ class ncRF:
                         x = gamma[i] * lhat[:, i].T.dot(ytilde)
                         # x = gamma[i] * tempx[i]
                         # update Zi
-                        z = inner1d(lhat[:, i], lhat[:, i])
-                        # z = np.einsum('i,i->',lhat[:, i], lhat[:, i])
-                        # z = (lhat[:, i] ** 2).sum()
+                        z = (lhat[:, i] ** 2).sum()
 
                     # update Ti
                     if dc == 1:
-                        gamma[i] = sqrt(inner1d(x, x)) / np.real(sqrt(z))
                         # gamma[i] = sqrt(np.einsum('i,i->',x, x)) / np.real(sqrt(z))
-                        # gamma[i] = sqrt((x ** 2).sum()) / np.real(sqrt(z))
+                        gamma[i] = sqrt((x ** 2).sum()) / np.real(sqrt(z))
                     elif dc == 3:
                         _compute_gamma_ip(z, x, gamma[i])
                     else:
@@ -918,9 +914,7 @@ class ncRF:
 
         def f(L, x, bbt, bE, EtE):
             Lx = np.matmul(L, x)
-            y = bbt - 2 * np.sum(inner1d(bE, Lx)) + np.sum(inner1d(Lx, np.matmul(Lx, EtE)))
-            # y = bbt - 2 *  np.einsum('ii', np.einsum('ij,kj->ik', Lx, bE))\
-            #     + np.einsum('ii', np.einsum('ij,kj->ik', np.matmul(Lx, EtE), Lx))
+            y = bbt - 2 * np.sum(bE * Lx) + np.sum(Lx * np.dot(Lx, EtE))
             return 0.5 * y
 
         def gradf(L, x, bE, EtE):
@@ -964,7 +958,7 @@ class ncRF:
             except np.linalg.LinAlgError:
                 hi = y.shape[0] - 1
                 lo = max(y.shape[0] - y.shape[1], 0)
-                e, v = linalg.eigh(Cb, eigvals=(lo, hi))
+                e, v = linalg.eigh(Cb, subset_by_index=(lo, hi))
                 tol = e[-1] * _R_tol
                 indices = e > tol
                 yhat = v[:, indices] * np.sqrt(e[indices])

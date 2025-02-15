@@ -132,8 +132,8 @@ class TimeSeriesSplit:
     def _iter_part_masks(self, X):
         n_v = ceil(self.ratio / (1 + self.ratio) * len(X))
         for i in range(self.p, 0, -1):
-            test_mask = np.zeros(len(X), dtype=np.bool)
-            train_mask = np.ones(len(X), dtype=np.bool)
+            test_mask = np.zeros(len(X), dtype=bool)
+            train_mask = np.ones(len(X), dtype=bool)
             train_mask[-(i*n_v+self.d):] = False
             if i == 1:
                 test_mask[-i*n_v:] = True
