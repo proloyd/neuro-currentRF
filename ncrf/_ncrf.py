@@ -1,3 +1,7 @@
+# Authors: Proloy Das <email:proloyd94@gmail.com>
+#          Christian Brodbeck <email:brodbecc@mcmaster.ca>
+#          Marlies Gillis <email: >
+# License: BSD (3-clause) 
 from typing import List
 import collections
 

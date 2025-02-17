@@ -1,3 +1,5 @@
+# Author: Proloy Das <email:proloyd94@gmail.com>
+# License: BSD (3-clause) 
 from setuptools import setup, find_packages
 from glob import glob
 from distutils.extension import Extension

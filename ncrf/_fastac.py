@@ -1,4 +1,5 @@
-# Author: Proloy Das <proloy@umd.edu>
+# Author: Proloy Das <email:proloyd94@gmail.com>
+# License: BSD (3-clause) 
 """Module implementing the FASTA algorithm"""
 
 import numpy as np

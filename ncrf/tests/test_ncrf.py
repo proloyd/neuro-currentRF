@@ -1,3 +1,5 @@
+# Author: Proloy Das <email:proloyd94@gmail.com>
+# License: BSD (3-clause) 
 import os
 import pickle
 from math import log
