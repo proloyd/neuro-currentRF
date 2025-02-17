@@ -1,51 +1,25 @@
 import os
 import pickle
 from math import log
-import certifi
-from ._ncrf import fit_ncrf
+from ncrf import fit_ncrf
+from .fetch import fetch_dataset
 
 from eelbrain import Categorial, concatenate
 from eelbrain.testing import assert_dataobj_equal
 import pytest
 
-
-os.environ.setdefault('SSL_CERT_FILE', certifi.where())
-
-# web url to fetch the file
-url = "https://ece.umd.edu/~proloy/.datasets/%s.pickled"
-
 names = ('meg', 'stim', 'fwd_sol', 'emptyroom')
-
-# manage local storage
-dirname = os.path.realpath(os.path.join(__file__, '..', '..', "ncrf_data"))
-if os.path.isdir(dirname) is False:
-    os.mkdir(dirname)
 
 
 def load(name):
+    folder_name = fetch_dataset()
     if name in names:
-        fname = os.path.join(dirname, f"{name}.pickled")
-        if not os.path.isfile(fname):
-            _fetch_file(url % name, fname)
-        else:
-            print(f"{name}.pickled already downloaded.")
+        fname = os.path.join(folder_name, f"{name}.pickled")
     else:
-        raise ValueError(f"{name}: not found")
+        raise ValueError(f"{name}: not found, check dataset version")
     with open(fname, 'rb') as f:
         v = pickle.load(f)
     return v
-
-
-def _fetch_file(url, fname):
-    import shutil
-    import tempfile
-    import urllib.request
-
-    with urllib.request.urlopen(url) as response:
-        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-            shutil.copyfileobj(response, tmp_file)
-    shutil.move(tmp_file.name, fname)
-    return
 
 
 def test_ncrf():
