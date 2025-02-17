@@ -18,3 +18,5 @@ ncrf/dsyevh3C/*.cpp
 *.html
 ncrf_data
 .pytest_cache
+.DS_Store
+*/.ipynb_checkpoints/*
