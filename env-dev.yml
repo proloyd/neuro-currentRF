@@ -9,13 +9,14 @@ dependencies:
 # building
 - setuptools >= 17
 - cython
-# docs
-- sphinx >= 3
-- sphinx-gallery
-- sphinxcontrib-bibtex
-- numpydoc
-- pydocstyle
+# # docs
+# - sphinx >= 3
+# - sphinx-gallery
+# - sphinxcontrib-bibtex
+# - numpydoc
+# - pydocstyle
 # # testing
+- seaborn   # required to import `eelbrain.testing`
 - flake8
 - pytest
 - pytest-cov
