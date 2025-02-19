@@ -20,21 +20,30 @@ pip install ncrf
 ```
 Note: yet to be released on PyPI yet. 
 
-### Development version from GiHub
-After cloning the GitHub repository, install using pip: 
+### Development version from GitHub
+Clone the GitHub repository and change the working directory:
 
 ```commandline
 git clone https://github.com/proloyd/neuro-currentRF.git
 cd neuro-currentRF
+```
+Create an environment with the necessary dependencies (this assumes [Mamba](https://conda-forge.org/download/) is already installed): 
+
+```commandline
+mamba env create --file=env-dev.yml
+```
+
+Then, install neuro-currentRF in development model using pip:
+
+```commandline
 pip install -e .
 ```
-and there you go!
-If the last command throws any error, ``Cython`` is most likely not installed. Then try installing ``Cython`` by following
-command: 
-```commandline
-conda install cython
-```
-then enter the last command again, and that should do the trick. 
+
+Using a `-e` installation, changes in `*.py` files will be automatically reflected when you `import ncrf`.
+Because Python caches imports, you may need to restart the kernel if you make changes after importing `ncrf`. 
+Changes in compiled files (`*.pyx`, `*.c`, ...) will not be automatically reflects.
+These require re-compilation (by running `pip install -e .` from the repository root folder).
+
 
 ## How to use:
 run
