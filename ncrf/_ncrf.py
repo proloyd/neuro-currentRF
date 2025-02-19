@@ -10,7 +10,7 @@ from eelbrain._utils import natsorted
 from mne import Covariance
 import numpy as np
 
-from ._model import ncRF, REG_Data
+from ._model import NCRF, RegressionData
 
 
 DEFAULT_MUs = np.logspace(-3, -1, 7)
@@ -94,7 +94,7 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
 
     Returns
     -------
-    trf : ncRF
+    trf : NCRF
         The result of the model fit.
 
     Examples
@@ -183,7 +183,7 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
         raise TypeError(f"normalize={normalize!r}, need bool or str")
 
     # Call `REG_Data.add_data` once for each contiguous segment of MEG data
-    ds = REG_Data(tstart, tstop, nlevels, s_baseline, s_scale, stim_is_single, gaussian_fwhm)
+    ds = RegressionData(tstart, tstop, nlevels, s_baseline, s_scale, stim_is_single, gaussian_fwhm)
     for r, ss in zip(meg_trials, stim_trials):
         if not in_place:
             ss = [s.copy() for s in ss]
@@ -248,7 +248,7 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
     if lead_field.get_dim('sensor') != ds.sensor_dim:
         lead_field = lead_field.sub(sensor=ds.sensor_dim)
 
-    model = ncRF(lead_field, noise_cov, n_iter=n_iter, n_iterc=n_iterc, n_iterf=n_iterf)
+    model = NCRF(lead_field, noise_cov, n_iter=n_iter, n_iterc=n_iterc, n_iterf=n_iterf)
     model.fit(ds, mu, do_crossvalidation, tol, verbose, mus=mus, n_splits=n_splits,
               n_workers=n_workers, use_ES=use_ES, compute_explained_variance=True)
     return model
