@@ -3,8 +3,8 @@ name: Python Package using Conda on linux and macos
 on: [push]
 
 jobs:
-  build-linux:
-    name: ${{ matrix.os }}
+  build-posix:
+    name: build-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     # runs-on: ubuntu-latest
     strategy:
