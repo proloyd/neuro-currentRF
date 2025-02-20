@@ -1,4 +1,9 @@
-**Wanna try ncRFs for your data???** 
+# Build Status
+![test-posix](https://github.com/proloyd/neuro-currentRF/actions/workflows/test-posix.yml/badge.svg)
+
+![test-windows](https://github.com/proloyd/neuro-currentRF/actions/workflows/test-windows.yml/badge.svg)
+
+# Wanna try ncRFs for your data???
 
 Tutorial on real dataset is now available [here](https://github.com/proloyd/neuro-currentRF/wiki/NCRF-tutorial).
 
@@ -86,7 +91,3 @@ of the 47th Annual Neuroscience Meeting (SfN 2018), Nov. 2-7, San Diego, CA.
 MEG via Non-Convex Optimization](https://isr.umd.edu/Labs/CSSL/simonlab/pubs/Asilomar2018.pdf); 2018 Asilomar Conference
  on Signals, Systems, and Computers, Oct. 28–31, Pacific Grove, CA (invited)
 
-## Build status
-
-[![Build Status](https://travis-ci.com/proloyd/neuro-currentRF.svg?token=Scq13yuJgybzKz4tNyxx&branch=master)](https://travis-ci.com/proloyd/neuro-currentRF)
-[![Build status](https://ci.appveyor.com/api/projects/status/s0b4si7yj280f9t8?svg=true)](https://ci.appveyor.com/project/proloyd/neuro-currentrf)
