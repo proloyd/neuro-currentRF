@@ -1,10 +1,15 @@
 name: Python Package using Conda on linux and macos
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
-  build-linux:
-    name: ${{ matrix.os }}
+  build-posix:
+    name: build-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     # runs-on: ubuntu-latest
     strategy:
