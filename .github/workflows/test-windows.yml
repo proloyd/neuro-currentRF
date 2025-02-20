@@ -3,7 +3,7 @@ name: Python Package using Conda on windows
 on: [push]
 
 jobs:
-  build-windows:
+  build-windows-latest:
     runs-on: windows-latest
 
     steps:
