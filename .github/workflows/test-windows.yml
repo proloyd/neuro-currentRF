@@ -12,13 +12,13 @@ jobs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: false
-        environment-file: windows-explicit.conda.lock
+        environment-file: env-dev.yml
         activate-environment: ncrf
     - name: build Neuro-currentRF
       shell: bash -el {0}
       run: |
         conda info
-        conda env update --file env-dev.yml -n ncrf
+        # conda env update --file env-dev.yml -n ncrf
         pip install -e .
     - name: Test with pytest
       shell: bash -el {0}
