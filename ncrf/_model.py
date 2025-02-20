@@ -215,7 +215,7 @@ def _compute_gamma_ip(z, x, gamma):
     return
 
 
-class REG_Data:
+class RegressionData:
     """Data Container for regression problem
 
     Parameters
@@ -354,7 +354,7 @@ class REG_Data:
         self.covariates.append(x)
 
     def _prewhiten(self, whitening_filter):
-        """Called by ncRF instance"""
+        """Called by NCRF instance"""
         if self._prewhitened is None:
             for i, (meg, _) in enumerate(self):
                 self.meg[i] = np.dot(whitening_filter, meg)
@@ -363,7 +363,7 @@ class REG_Data:
             pass
 
     def _precompute(self):
-        """Called by ncRF instance"""
+        """Called by NCRF instance"""
         self._bbt = []
         self._bE = []
         self._EtE = []
@@ -423,7 +423,7 @@ class REG_Data:
                 start += basis_length
 
 
-class ncRF:
+class NCRF:
     """The object-based API for cortical TRF localization
 
     Parameters
@@ -468,12 +468,12 @@ class ncRF:
     -----
     Usage:
 
-        1. Initialize :class:`ncRF` instance with desired properties
+        1. Initialize :class:`NCRF` instance with desired properties
         2. Initialize :class:`REG_Data` instance with desired properties
         2. Call :meth:`REG_Data.add_data` once for each contiguous segment of MEG
            data
-        3. Call :meth:`ncRF.fit` with REG_Data instance to estimate the cortical TRFs.
-        4. Access the cortical TRFs in :attr:`ncRF.h`.
+        3. Call :meth:`NCRF.fit` with REG_Data instance to estimate the cortical TRFs.
+        4. Access the cortical TRFs in :attr:`NCRF.h`.
     """
     _name = 'cTRFs estimator'
     _cv_results = None
@@ -625,7 +625,7 @@ class ncRF:
 
         Parameters
         ----------
-        data : REG_Data
+        data : RegressionData
             regression data to fit.
         theta : ndarray
             co-effecients of the TRFs over Gabor atoms.
@@ -768,7 +768,7 @@ class ncRF:
         if self._whitening_filter is None:
             self._prewhiten()
         # pre-whiten data
-        if isinstance(data, REG_Data):
+        if isinstance(data, RegressionData):
             data._prewhiten(self._whitening_filter)
 
         logger.info('Initiating from mne sol, please wait...')
@@ -895,7 +895,7 @@ class ncRF:
 
         Parameters
         ---------
-        data : REG_Data
+        data : RegressionData
             Data.
         """
         leadfields = []
@@ -942,7 +942,7 @@ class ncRF:
 
         Parameters
         ---------
-        data : REG_Data
+        data : RegressionData
             Data.
 
         Returns

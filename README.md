@@ -2,7 +2,7 @@
 
 Tutorial on real dataset is now available [here](https://github.com/proloyd/neuro-currentRF/wiki/NCRF-tutorial).
 
-# ncRF   
+# NCRF   
 The magnetoencephalography (MEG) response to continuous auditory stimuli, such as speech, is commonly described using a linear filter, the auditory temporal response function (TRF). Though components of the sensor level TRFs have been well characterized, the cortical distributions of  the underlying neural responses are not well-understood. In our recent work, we provide a unified framework for determining the TRFs of neural sources directly from the MEG data, by integrating the TRF and distributed forward  source models into one, and casting the joint estimation task as a Bayesian optimization problem. Though the resulting  problem emerges as non-convex, we propose efficient solutions that leverage recent advances in evidence maximization. For more details please refer to [1], [2].
 
 This repository contains the implementation of our direct TRF estimation algorithm in python (version 3.6 and above). 
@@ -20,21 +20,30 @@ pip install ncrf
 ```
 Note: yet to be released on PyPI yet. 
 
-### Development version from GiHub
-After cloning the GitHub repository, install using pip: 
+### Development version from GitHub
+Clone the GitHub repository and change the working directory:
 
 ```commandline
 git clone https://github.com/proloyd/neuro-currentRF.git
 cd neuro-currentRF
+```
+Create an environment with the necessary dependencies (this assumes [Mamba](https://conda-forge.org/download/) is already installed): 
+
+```commandline
+mamba env create --file=env-dev.yml
+```
+
+Then, install neuro-currentRF in development model using pip:
+
+```commandline
 pip install -e .
 ```
-and there you go!
-If the last command throws any error, ``Cython`` is most likely not installed. Then try installing ``Cython`` by following
-command: 
-```commandline
-conda install cython
-```
-then enter the last command again, and that should do the trick. 
+
+Using a `-e` installation, changes in `*.py` files will be automatically reflected when you `import ncrf`.
+Because Python caches imports, you may need to restart the kernel if you make changes after importing `ncrf`. 
+Changes in compiled files (`*.pyx`, `*.c`, ...) will not be automatically reflects.
+These require re-compilation (by running `pip install -e .` from the repository root folder).
+
 
 ## How to use:
 run

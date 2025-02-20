@@ -77,7 +77,7 @@ def crossvalidate(model, data, mus, tol, n_splits, n_workers=None) -> List[CVRes
     Parameters
     ----------
     model: model instance
-        the model to be validated, here `ncRF`. In addition to that it needs to
+        the model to be validated, here `NCRF`. In addition to that it needs to
         support the :func:`copy.copy` function.
     data: REGdata
         Data.
