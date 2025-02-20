@@ -1,6 +1,11 @@
 name: Python Package using Conda on linux and macos
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
   build-posix:
