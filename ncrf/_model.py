@@ -424,13 +424,13 @@ class RegressionData:
 
 
 class NCRF:
-    """The object-based API for cortical TRF localization
+    """The object-based API for cortical TRF localization.
 
     Parameters
     ----------
-    lead_field : NDVar
+    lead_field : eelbrain.NDVar
         forward solution a.k.a. lead_field matrix.
-    noise_covariance : ndarray
+    noise_covariance : np.ndarray
         noise covariance matrix, use empty-room recordings to generate noise covariance
         matrix at sensor space.
     n_iter : int

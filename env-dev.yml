@@ -6,13 +6,21 @@ channels:
 dependencies:
 - eelbrain >= 0.34
 # building
+- pip
 - setuptools >= 17
 - cython
-# # docs
-# - sphinx >= 3
-# - sphinx-gallery
-# - sphinxcontrib-bibtex
-# - numpydoc
+# docs
+- numpydoc
+- furo
+- matplotlib
+- sphinx-copybutton
+- sphinx-design
+- sphinx-gallery
+- sphinx-issues
+- sphinxcontrib-bibtex
+- pip: 
+  - intersphinx_registry
+  - memory-profiler
 # - pydocstyle
 # # testing
 - seaborn   # required to import `eelbrain.testing`
@@ -20,3 +28,7 @@ dependencies:
 - pytest <= 8.1.1  # namespace vs module import?
 - pytest-cov
 - pytest-faulthandler
+# docs
+
+
+
