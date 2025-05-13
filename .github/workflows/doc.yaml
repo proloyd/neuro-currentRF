@@ -56,7 +56,7 @@ jobs:
         with:
           folder: doc-dev
           # target-folder: ./neuro-currentRF
-          # git-config-name: 'github-actions[bot]'
-          # git-config-email: 'github-actions[bot]@users.noreply.github.com'
-          # single-commit: true
-          # force: true
+          git-config-name: 'github-actions[bot]'
+          git-config-email: 'github-actions[bot]@users.noreply.github.com'
+          single-commit: true
+          force: true
