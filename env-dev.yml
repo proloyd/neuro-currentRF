@@ -17,6 +17,6 @@ dependencies:
 # # testing
 - seaborn   # required to import `eelbrain.testing`
 - flake8
-- pytest
+- pytest <= 8.1.1  # namespace vs module import?
 - pytest-cov
 - pytest-faulthandler
