@@ -36,7 +36,7 @@ jobs:
     - name: build Neuro-currentRF
       shell: bash -el {0}
       run: |
-        pip install .
+        python -m pip install --editable .
     - if: ${{ matrix.cc }}
       name: Test with pytest and code-cov
       shell: bash -el {0}
