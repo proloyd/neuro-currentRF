@@ -134,7 +134,7 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
     if isinstance(meg, NDVar):
         meg_list = [meg]
         stim_list = [stim]
-    elif isinstance(meg, collections.Sequence):
+    elif isinstance(meg, collections.abc.Sequence):
         if len(stim) != len(meg):
             raise ValueError(f"meg={meg}, stim={stim}: different length")
         meg_list = list(meg)
