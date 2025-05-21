@@ -236,9 +236,7 @@ class RegressionData:
     _prewhitened = None
 
     def __init__(self, tstart, tstop, nlevel=1, baseline=None, scaling=None, stim_is_single=None, gaussian_fwhm=20.0):
-        if tstart != 0:
-            raise NotImplementedError("tstart != 0 is not implemented")
-        self.tstart = tstart
+        self.tstart = tstart if isinstance(tstart, collections.abc.Sequence) else [tstart]
         self.tstop = tstop if isinstance(tstop, collections.abc.Sequence) else [tstop]
         self.nlevel = nlevel
         self.s_baseline = baseline
@@ -287,10 +285,13 @@ class RegressionData:
                 stim_dims.append(dim)
             else:
                 raise ValueError(f"stim={stim}: stimulus with more than 2 dimensions")
-
+            
         if len(self.tstop) == 1:
             self.tstop = self.tstop * len(stim_dims)
+        if len(self.tstart) == 1:
+            self.tstart = self.tstart * len(stim_dims)
         assert len(self.tstop) == len(stim_dims)
+        assert len(self.tstart) == len(stim_dims)
 
         # stim normalization
         if self.s_baseline is not None:
@@ -307,13 +308,13 @@ class RegressionData:
         if self.tstep is None:
             # initialize time axis
             self.tstep = meg_time.tstep
-            start = int(round(self.tstart / self.tstep))
+            start = [int(round(tstart / self.tstep)) for tstart in self.tstart]
             stop = [int(round(tstop / self.tstep)) for tstop in self.tstop]
-            self.filter_length = [stop_ - start + 1 for stop_ in stop]
+            self.filter_length = np.subtract(stop, start)
             # basis
             self.basis = []
-            for tstop, filter_length in zip(self.tstop, self.filter_length):
-                x = np.linspace(int(round(1000*self.tstart)), int(round(1000*tstop)), filter_length)
+            for tstart, tstop, filter_length in zip(self.tstart, self.tstop, self.filter_length):
+                x = np.linspace(int(round(1000*tstart)), int(round(1000*tstop)), filter_length)
                 self.basis.append(gaussian_basis(int(round((filter_length-1)/self.nlevel)), x))
             # stimuli
             self._stim_dims = stim_dims
@@ -1106,19 +1107,16 @@ class NCRF:
         trf = [np.dot(x, basis.T) / self.lead_field_scaling for x, basis in zip(_trf, self._basis)]
 
         h = []
-        for x, dim, name in zip(trf, self._stim_dims, self._stim_names):
+        for x, dim, name, tstart in zip(trf, self._stim_dims, self._stim_names, self.tstart):
             if dim:
-                time = UTS(self.tstart, self.tstep, x.shape[-1])
+                time = UTS(tstart, self.tstep, x.shape[-1])
                 shared_dims = (*_shared_dims, time)
                 x = x.reshape((-1, *(map(len, shared_dims))))
                 dims = (dim, *shared_dims)
-
             else:
-                time = UTS(self.tstart, self.tstep, x.shape[-1])
+                time = UTS(tstart, self.tstep, x.shape[-1])
                 dims = (*_shared_dims, time)
                 x = x.reshape(*(map(len, dims)))
-                # x = trf[i]
-                # i += 1
             h.append(NDVar(x, dims, name=name))
 
         if self._stim_is_single:
