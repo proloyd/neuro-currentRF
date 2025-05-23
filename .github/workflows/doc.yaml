@@ -6,7 +6,7 @@ on:  # yamllint disable-line rule:truthy
   pull_request:
   push:
     branches:
-      - main
+      - master
       - doc*
   workflow_dispatch:
 
@@ -30,7 +30,8 @@ jobs:
       - name: build Neuro-currentRF and doc
         shell: bash -el {0}
         run: |
-          pip install .
+          python -m pip install -e .[doc]
+          python -c "import ncrf"
           make -C docs html
       - name: Prune sphinx environment
         run: rm -R ./docs/_build/html/.doctrees

@@ -23,9 +23,8 @@ jobs:
     - name: build Neuro-currentRF
       shell: bash -el {0}
       run: |
-        conda info
-        pip install .
+        pip install -e .[test]
     - name: Test with pytest
       shell: bash -el {0}
       run: |
-        pytest --import-mode=importlib  --crossvalidation=True
+        pytest  --crossvalidation=True
