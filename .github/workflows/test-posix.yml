@@ -36,13 +36,12 @@ jobs:
     - name: build Neuro-currentRF
       shell: bash -el {0}
       run: |
-        python -m pip wheel --no-build-isolation .
-        python -m pip install --editable .
+        python -m pip install -e .[test]
     - if: ${{ matrix.cc }}
       name: Test with pytest and code-cov
       shell: bash -el {0}
       run: |
-        pytest --import-mode=importlib --cov --cov-report=xml  # namespace vs module import?
+        pytest --cov --cov-report=xml  # namespace vs module import?
     - if: ${{ matrix.cc }}
       name: Upload coverage to Codecov  
       uses: codecov/codecov-action@v4
@@ -52,5 +51,5 @@ jobs:
       name: Test with pytest and cv
       shell: bash -el {0}
       run: |
-        pytest --import-mode=importlib --crossvalidation=True
+        pytest --crossvalidation=True
 
