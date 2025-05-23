@@ -1,30 +1,7 @@
 # Environment for development
-# usage: $ mamba env create --file=env-dev.yml
+# usage: $ conda env create --file=env-dev.yml
 name: ncrf
 channels:
 - conda-forge
 dependencies:
 - eelbrain >= 0.34
-# building
-- pip
-- setuptools >= 17
-- cython
-# docs
-- numpydoc
-- furo
-- matplotlib
-- sphinx-copybutton
-- sphinx-design
-- sphinx-gallery
-- sphinx-issues
-- sphinxcontrib-bibtex
-- pip: 
-  - intersphinx_registry
-  - memory-profiler
-#- pydocstyle
-# testing
-- seaborn   # required to import `eelbrain.testing`
-- flake8
-- pytest <= 8.1.1  # namespace vs module import?
-- pytest-cov
-- pytest-faulthandler

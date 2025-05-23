@@ -27,10 +27,9 @@ dependencies = [
 ]
 description='add-on module to eelbrain for neural current RF estimation'
 keywords = [
-  'ant neuro',
-  'cnt',
+  'meg',
   'eeg',
-  'eego',
+  'source localization',
   'python',
 ]
 license = 'MIT'
@@ -75,7 +74,8 @@ test = [
   'flake8',
   'pytest-cov',
   'pytest>=8.0,<8.1.1',
-  'pytest-faulthandler'
+  'pytest-faulthandler',
+  'seaborn'  # required to import `eelbrain.testing`
 ]
 
 [tool.tomlsort]

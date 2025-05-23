@@ -1,15 +1,7 @@
 # Author: Proloy Das <email:proloyd94@gmail.com>
 # License: BSD (3-clause) 
-from setuptools import setup, find_packages
-from glob import glob
-from distutils.extension import Extension
-# from Cython.Distutils import build_ext
-from os.path import pathsep
-try:
-    import numpy as np
-except ModuleNotFoundError:
-    import pkg_resources
-    print([p.project_name for p in pkg_resources.working_set])
+from setuptools import setup, find_packages, Extension
+import numpy as np
 
 try:
     from Cython.Build import cythonize
