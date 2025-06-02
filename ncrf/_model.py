@@ -310,7 +310,7 @@ class RegressionData:
             self.tstep = meg_time.tstep
             start = [int(round(tstart / self.tstep)) for tstart in self.tstart]
             stop = [int(round(tstop / self.tstep)) for tstop in self.tstop]
-            self.filter_length = np.subtract(stop, start)
+            self.filter_length = np.subtract(stop, start) + 1
             # basis
             self.basis = []
             for tstart, tstop, filter_length in zip(self.tstart, self.tstop, self.filter_length):
