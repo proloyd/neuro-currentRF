@@ -198,17 +198,15 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
         noise_cov = np.dot(er, er.T) / er.shape[1]
     elif isinstance(noise, Covariance):
         # check for channel mismatch
-        chs_noise = set(noise.ch_names)
-        chs_data = set(ds.sensor_dim.names)
-        chs_both = natsorted(chs_noise.intersection(chs_data))
-        if len(chs_both) < len(chs_data):
-            missing = sorted(chs_data.difference(chs_noise))
-            raise NotImplementedError(f"Noise covariance is missing data for sensors {', '.join(missing)}")
-        elif len(chs_both) < len(chs_noise) or not np.all(ds.sensor_dim.names == chs_both):
-            index = np.array([noise.ch_names.index(ch) for ch in chs_both])
-            noise_cov = noise.data[index[:, np.newaxis], index]
-        else:
-            assert sorted(noise.ch_names) == chs_both
+        chs_noise = list(noise.ch_names)
+        chs_data = list(ds.sensor_dim.names)
+        if set(chs_noise) != set(chs_data):
+            missing_in_noise = sorted(set(chs_data) - set(chs_noise))
+            missing_in_data = sorted(set(chs_noise) - set(chs_data))
+            raise ValueError(f"Channel mismatch:\n"
+                             f" - In data but not in noise: {missing_in_noise}\n"
+                             f" - In noise but not in data: {missing_in_data}")
+        if set(chs_noise) == set(chs_data):
             if noise['diag']:
                 squareMatrix = np.zeros([len(noise.data), len(noise.data)])
                 row, col = np.diag_indices(squareMatrix.shape[0])
