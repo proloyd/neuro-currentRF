@@ -206,7 +206,8 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
             raise ValueError(f"Channel mismatch:\n"
                              f" - In data but not in noise: {missing_in_noise}\n"
                              f" - In noise but not in data: {missing_in_data}")
-        if set(chs_noise) == set(chs_data):
+        else:
+
             if noise['diag']:
                 squareMatrix = np.zeros([len(noise.data), len(noise.data)])
                 row, col = np.diag_indices(squareMatrix.shape[0])
