@@ -1,7 +1,7 @@
 # Authors: Proloy Das <email:proloyd94@gmail.com>
 #          Christian Brodbeck <email:brodbecc@mcmaster.ca>
 #          Marlies Gillis <email: >
-# License: BSD (3-clause) 
+# License: BSD (3-clause)
 from typing import List
 import collections
 
@@ -42,10 +42,10 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
     noise : mne.Covariance | NDVar | ndarray
         The empty room noise covariance, or data from which to compute it as
         :class:`NDVar`.
-    tstart : float
-        Start of the TRF in seconds.
-    tstop : float
-        Stop of the TRF in seconds.
+    tstart : float | list[float]
+        Start of the TRF in seconds. Can define multiple tstarts for more than 1 predictor.
+    tstop : float | list[float]
+        Stop of the TRF in seconds. Can define multiple tstops for more than 1 predictor.
     nlevels : int
         Decides the density of Gabor atoms. Bigger nlevel -> less dense basis.
         By default it is set to `1`. `nlevesl > 2` should be used with caution.
@@ -136,7 +136,7 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
     if isinstance(meg, NDVar):
         meg_list = [meg]
         stim_list = [stim]
-    elif isinstance(meg, collections.Sequence):
+    elif isinstance(meg, collections.abc.Sequence):
         if len(stim) != len(meg):
             raise ValueError(f"meg={meg}, stim={stim}: different length")
         meg_list = list(meg)

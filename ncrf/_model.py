@@ -41,8 +41,7 @@ def gaussian_basis(nlevel, span, stds=8.5):
     """
     logger = logging.getLogger(__name__)
     x = span
-    means = np.linspace(x[-1] / nlevel, x[-1] * (1 - 1 / nlevel), num=nlevel - 1)
-    # stds = 8.5
+    means = np.linspace(x[0] + x[-1] / nlevel, x[-1] * (1 - 1 / nlevel), num=nlevel-1)
     logger.info(f'Using gaussian std = {stds}')
     W = []
 
@@ -99,15 +98,17 @@ def proxg_group_opt(z, mu):
     return z
 
 
-def covariate_from_stim(stims, Ms):
+def covariate_from_stim(stims, Ms, start):
     """Form covariate matrix from stimulus
 
     parameters
     ----------
     stims : list of NDVar
         Predictor variables.
-    M : int
-        Order of filter.
+    Ms : list of int
+        Order of filters.
+    start : list of int
+        Starting times for TRFs (in samples)
 
     returns
     -------
@@ -115,7 +116,7 @@ def covariate_from_stim(stims, Ms):
         Covariate matrices.
     """
     ws = []
-    for stim in stims:
+    for i, stim in enumerate(stims):
         if stim.ndim == 1:
             w = stim.get_data((np.newaxis, 'time'))
         else:
@@ -124,6 +125,13 @@ def covariate_from_stim(stims, Ms):
         ws.append(w)
     w = ws[0] if len(ws) == 1 else np.concatenate(ws, 0)
 
+    # adds tstarts into array for multi dimensional stimuli
+    if len(start) != len(w):
+        ndim_starts = np.full(stim.ndim - 1, start[i])
+        start = np.insert(start, i, ndim_starts)
+
+    assert len(w) == len(Ms) == len(start), f"Length of w ({len(w)}), Ms ({len(Ms)}), and start ({len(start)}) should be equal"
+
     length = w.shape[1]
     Y = []
     M_ = max(Ms)
@@ -131,8 +139,19 @@ def covariate_from_stim(stims, Ms):
         X = []
         for i in range(M_ - M, length - M + 1):
             X.append(np.flipud(w[j, i:i + M]))
-        Y.append(np.array(X))
+        X = np.array(X)
 
+        if start[j] != 0:
+            n_shift = abs(start[j])
+            delay_pad = np.zeros(shape=(n_shift, M))
+            if start[j] < 0: # -ve tstart -> shift covariate matrix left
+                X = np.concatenate([X, delay_pad])
+                X = X[n_shift:,:]
+            else: # +ve tstart -> shift covariate matrix right
+                X = np.concatenate([delay_pad, X])
+                X = X[:-n_shift,:]
+
+        Y.append(X)
     return Y
 
 
@@ -159,7 +178,7 @@ def _inv_sqrtm(m, return_eig=False):
 
 
 def _compute_gamma_i(z, x):
-    """ Comptes Gamma_i
+    """ Computes Gamma_i
 
     Gamma_i = Z**(-1/2) * ( Z**(1/2) X X' Z**(1/2)) ** (1/2) * Z**(-1/2)
            = V(E)**(-1/2)V' * ( V ((E)**(1/2)V' X X' V(E)**(1/2)) V')** (1/2) * V(E)**(-1/2)V'
@@ -220,10 +239,10 @@ class RegressionData:
 
     Parameters
     ----------
-    tstart : float
-        Start of the TRF in seconds.
-    tstop : float
-        Stop of the TRF in seconds.
+    tstart : float | list[float]
+        Start of the TRF in seconds. Can define multiple tstarts for more than 1 predictor.
+    tstop : float | list[float]
+        Stop of the TRF in seconds. Can define multiple tstops for more than 1 predictor.
     nlevel : int
         Decides the density of Gabor atoms. Bigger nlevel -> less dense basis.
         By default it is set to 1. ``nlevel > 2`` should be used with caution.
@@ -286,10 +305,10 @@ class RegressionData:
             else:
                 raise ValueError(f"stim={stim}: stimulus with more than 2 dimensions")
             
-        if len(self.tstop) == 1:
-            self.tstop = self.tstop * len(stim_dims)
         if len(self.tstart) == 1:
             self.tstart = self.tstart * len(stim_dims)
+        if len(self.tstop) == 1:
+            self.tstop = self.tstop * len(stim_dims)
         assert len(self.tstop) == len(stim_dims)
         assert len(self.tstart) == len(stim_dims)
 
@@ -308,9 +327,9 @@ class RegressionData:
         if self.tstep is None:
             # initialize time axis
             self.tstep = meg_time.tstep
-            start = [int(round(tstart / self.tstep)) for tstart in self.tstart]
-            stop = [int(round(tstop / self.tstep)) for tstop in self.tstop]
-            self.filter_length = np.subtract(stop, start) + 1
+            self.start = [int(round(tstart / self.tstep)) for tstart in self.tstart]
+            self.stop = [int(round(tstop / self.tstep)) for tstop in self.tstop]
+            self.filter_length = np.subtract(self.stop, self.start) + 1
             # basis
             self.basis = []
             for tstart, tstop, filter_length in zip(self.tstart, self.tstop, self.filter_length):
@@ -336,11 +355,9 @@ class RegressionData:
             self._norm_factor = sqrt(y.shape[1])
 
         # add corresponding covariate matrix
-        # covariates = np.dot(covariate_from_stim(stims, self.filter_length),
-        #                     self.basis) / sqrt(y.shape[1])  # Mind the normalization
         stim_lens = [len(dim) if dim else 1 for dim in stim_dims]
         filter_lengths = np.repeat(np.asanyarray(self.filter_length), stim_lens)
-        _covariates = covariate_from_stim(stims, filter_lengths)
+        _covariates = covariate_from_stim(stims, filter_lengths, self.start)
         i = 0
         covariates = []
         for dim, basis in zip(stim_dims, self.basis):
