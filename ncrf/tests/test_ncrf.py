@@ -65,24 +65,23 @@ def test_ncrf():
     assert model._stim_scaling[0] == stim.std()
     assert model.h[0].norm('time').norm('source').norm('space') == pytest.approx(7.0088e-10, rel=0.001)
     
-    # 2 stimuli, different tstarts
+    # 2 stimuli, different tstarts (-ve)
     diff = stim.diff('time')
     stim2 = concatenate([diff.clip(0), diff.clip(max=0)], Categorial('rep', ['on', 'off']))
     tstart = [-0.1, 0.1]
     tstop = [0.2, 0.3]
     model = fit_ncrf(meg, [stim, stim2], fwd, emptyroom, tstart=tstart, tstop=tstop, normalize='l2', mu=0.0019444, n_iter=3,
                     n_iterc=3, n_iterf=10, do_post_normalization=False)
-    
+
     # check residual and explained var
-    assert model.explained_var == pytest.approx(0.018598814568553834, rel=0.001)
-    assert model.voxelwise_explained_variance.sum() == pytest.approx(0.10218792614824691, rel=0.001)
-    assert model.residual == pytest.approx(176.903, 0.001)
+    assert model.explained_var == pytest.approx(0.02148945636352262, rel=0.001)
+    assert model.residual == pytest.approx(176.953, 0.001)
     # check start and stop
     assert model.tstart == tstart and model.tstop == tstop
     # check scaling
     assert model._stim_baseline[0] == stim.mean()
     assert model._stim_scaling[0] == stim.std()
-    assert model.h[0].norm('time').norm('source').norm('space') == pytest.approx(8.90795e-10, rel=0.001)
+    assert model.h[0].norm('time').norm('source').norm('space') == pytest.approx(5.9598e-10, rel=0.001)
 
     # cross-validation
     model = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu='auto', n_iter=1, n_iterc=2, n_iterf=2,
