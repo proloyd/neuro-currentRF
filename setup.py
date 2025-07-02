@@ -1,10 +1,6 @@
 # Author: Proloy Das <email:proloyd94@gmail.com>
 # License: BSD (3-clause) 
-from setuptools import setup, find_packages
-from glob import glob
-from distutils.extension import Extension
-# from Cython.Distutils import build_ext
-from os.path import pathsep
+from setuptools import setup, find_packages, Extension
 import numpy as np
 
 try:
@@ -24,27 +20,7 @@ if cythonize:
 
 
 setup(
-    name="ncrf",
-    description="A Unified Approach to MEG Source Analysis under the Continuous Stimuli Paradigm",
-    long_description='add-on module to eelbrain for neural current RF estimation'
-                     'GitHub: https://github.com/proloyd/neuro-currentRF',
-    version="0.4dev",
-    python_requires='>=3.6',
-
-    install_requires=[
-        'eelbrain',
-    ],
-
-    # metadata for upload to PyPI
-    author="Proloy DAS",
-    author_email="proloy@umd.com",
-    license="BSD 2-Clause (Simplified)",
-    # cmdclass={'build_ext': build_ext},
     include_dirs=[np.get_include()],
     packages=find_packages(),
     ext_modules=extensions,
-    url='https://github.com/proloyd/neuro-currentRF',
-    project_urls={
-        "Source Code": "https://github.com/proloyd/neuro-currentRF/archive/0.3.tar.gz",
-    }
 )

@@ -23,10 +23,8 @@ jobs:
     - name: build Neuro-currentRF
       shell: bash -el {0}
       run: |
-        conda info
-        # conda env update --file env-dev.yml -n ncrf
-        pip install -e .
+        pip install -e .[test]
     - name: Test with pytest
       shell: bash -el {0}
       run: |
-        python -m pytest --crossvalidation=True
+        pytest  --crossvalidation=True

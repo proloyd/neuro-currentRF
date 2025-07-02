@@ -1,0 +1,98 @@
+[build-system]
+requires = [
+    "setuptools >= 64.0.0",
+    "numpy",
+    "cython",
+    ]
+build-backend = "setuptools.build_meta"
+
+[project]
+authors = [
+  {email = 'proloyd94@gmail.com', name = 'Proloy Das'},
+]
+classifiers = [
+  'Natural Language :: English',
+  'Operating System :: MacOS',
+  'Operating System :: Microsoft :: Windows',
+  'Operating System :: Unix',
+  'Programming Language :: Python :: 3 :: Only',
+  'Programming Language :: Python :: 3.10',
+  'Programming Language :: Python :: 3.11',
+  'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
+  'Programming Language :: Python :: 3.9',
+]
+dependencies = [
+  'numpy>=1.23,<3',
+]
+description='add-on module to eelbrain for neural current RF estimation'
+keywords = [
+  'meg',
+  'eeg',
+  'source localization',
+  'python',
+]
+license = 'MIT'
+license-files = ['LICENSE.txt']
+maintainers = [
+  {email = 'proloyd94@gmail.com', name = 'Proloy Das'},
+  {name = 'Chrsitian Brodbeck'},
+]
+name = 'ncrf'
+readme = 'README.md'
+requires-python = '>=3.9'
+version = '0.4.0.dev0'
+
+[project.optional-dependencies]
+all = [
+  'ncrf[style]',
+  'ncrf[test]',
+  'ncrf[doc]',
+]
+full = [
+  'ncrf[all]',
+]
+style = [
+  'codespell[toml]>=2.2.4',
+  'ruff>=0.6.0',
+  'toml-sort',
+  'yamllint',
+]
+doc = [
+  'numpydoc',
+  'furo',
+  'matplotlib',
+  'sphinx-copybutton',
+  'sphinx-design',
+  'sphinx-gallery',
+  'sphinx-issues',
+  'sphinxcontrib-bibtex',
+  'intersphinx_registry',
+  'memory-profiler',
+]
+test = [
+  'flake8',
+  'pytest-cov',
+  'pytest>=8.0,<8.1.1',
+  'pytest-faulthandler',
+  'seaborn'  # required to import `eelbrain.testing`
+]
+
+[tool.tomlsort]
+all = true
+ignore_case = true
+spaces_before_inline_comment = 2
+trailing_comma_inline_array = true
+
+[project.urls]
+documentation = 'https://proloyd.github.io/neuro-currentRF'
+homepage = 'https://github.com/proloyd/neuro-currentRF'
+source = 'https://github.com/proloyd/neuro-currentRF'
+tracker = 'https://github.com/proloyd/neuro-currentRF/issues'
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+exclude = ['ncrf*tests']
+include = ['ncrf*']

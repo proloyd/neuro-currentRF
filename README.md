@@ -12,44 +12,6 @@ The magnetoencephalography (MEG) response to continuous auditory stimuli, such a
 
 This repository contains the implementation of our direct TRF estimation algorithm in python (version 3.6 and above). 
 
-## Requirements:
-Eelbrain ([Download/ Installation Instructions](https://github.com/christianbrodbeck/Eelbrain/wiki/Installing#release))
-
-## Installation
-After successfully installing Eelbrain, one can follow either of the methods to install different versions the repository.   
-
-### Installing the release version
-The following comment will install the latest released version:
-```commandline
-pip install ncrf
-```
-Note: yet to be released on PyPI yet. 
-
-### Development version from GitHub
-Clone the GitHub repository and change the working directory:
-
-```commandline
-git clone https://github.com/proloyd/neuro-currentRF.git
-cd neuro-currentRF
-```
-Create an environment with the necessary dependencies (this assumes [Mamba](https://conda-forge.org/download/) is already installed): 
-
-```commandline
-mamba env create --file=env-dev.yml
-```
-
-Then, install neuro-currentRF in development model using pip:
-
-```commandline
-pip install -e .
-```
-
-Using a `-e` installation, changes in `*.py` files will be automatically reflected when you `import ncrf`.
-Because Python caches imports, you may need to restart the kernel if you make changes after importing `ncrf`. 
-Changes in compiled files (`*.pyx`, `*.c`, ...) will not be automatically reflects.
-These require re-compilation (by running `pip install -e .` from the repository root folder).
-
-
 ## How to use:
 run
 ```python
@@ -72,15 +34,6 @@ auditory periphery) across the frequency bands, sampled at `200 Hz`.  A volume s
 ![Demo](https://user-images.githubusercontent.com/28169943/49410670-bf51c500-f733-11e8-9894-43880aa8d49e.gif)
 
 Isn't that cool? Do expect to see something like that with any other source localization method? If you realize you could use this method on your data, please feel free to use the codes. You can reach me at proloy@umd.edu if you have any issues with the codes. And don't forget to go over the papers/ posters before applying the algorithm. 
-
-## Bug reports / Contact
-*Since this is a dev version, and I will be adding more functionality over time, so feel free to ask me to add any other functionality, or report if anything is broken.
-If you want to contact the author, you can do so under the following email-address: proloy@umd.edu*
-
-Terms of Use / License
-----------------------
-This repository is free software, covered by the Apache License 2.0. However since they have been mainly developed for academic use, the author would appreciate being given academic credit for it. 
-Whenever you use this software to produce a publication or talk, please cite the following references.
 
 ## References
 [1] P. Das, C. Brodbeck, J. Z. Simon, B. Babadi, [Direct Cortical Localization of the MEG Auditory Temporal Response 
