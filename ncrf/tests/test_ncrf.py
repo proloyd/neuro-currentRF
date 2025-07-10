@@ -2,13 +2,16 @@
 # License: BSD (3-clause) 
 import os
 import pickle
+import pytest
+import numpy as np
+
 from math import log
 from ncrf import fit_ncrf
 from .fetch import fetch_dataset
 
 from eelbrain import Categorial, concatenate
 from eelbrain.testing import assert_dataobj_equal
-import pytest
+from ncrf._model import covariate_from_stim
 
 names = ('meg', 'stim', 'fwd_sol', 'emptyroom')
 
@@ -88,3 +91,33 @@ def test_ncrf():
                      n_workers=1, do_post_normalization=False)
     assert model.mu == pytest.approx(0.0203, 0.001)
     model.cv_info()
+
+def test_covariate_from_stim():
+    stim = load('stim')[0]
+    # Test if difference between list of stimuli and concatenated stimuli
+    diff = stim.diff('time')
+
+    start=[-20, -20]
+    stop=[20, 20]
+    filter_lengths = np.subtract(stop, start) + 1
+    covariates = covariate_from_stim([stim, diff], filter_lengths, start)
+
+    conc = concatenate([stim, diff.clip(0)], Categorial('rep', ['on', 'off']))
+    covariates_conc = covariate_from_stim(conc, filter_lengths, start)
+
+    assert np.array(covariates).shape == np.array(covariates_conc).shape
+    assert np.array(covariates)[0,0,0] == pytest.approx(np.array(covariates_conc)[0,0,0], rel = 0.001)
+
+    # Test if shifted covariate array is equal to unshifted
+    start=[-20]
+    stop=[20]
+    filter_lengths = np.subtract(stop, start) + 1
+    covariates = covariate_from_stim([stim], filter_lengths, start)
+
+    start=[0]
+    stop=[40]
+    filter_lengths = np.subtract(stop, start) + 1
+    covariates_shift = covariate_from_stim([stim], filter_lengths, start)
+
+    assert np.array_equal(covariates[0].T[:, 0:100], covariates_shift[0].T[:, 20:120]) # Beginning
+    assert np.array_equal(covariates[0].T[:,-120:-20], covariates_shift[0].T[:,-100:]) # End
