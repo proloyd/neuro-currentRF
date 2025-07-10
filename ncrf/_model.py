@@ -125,17 +125,12 @@ def covariate_from_stim(stims, Ms, start):
         ws.append(w)
     w = ws[0] if len(ws) == 1 else np.concatenate(ws, 0)
 
-    # adds tstarts into array for multi dimensional stimuli
-    if len(start) != len(w):
-        ndim_starts = np.full(stim.ndim - 1, start[i])
-        start = np.insert(start, i, ndim_starts)
-
     assert len(w) == len(Ms) == len(start), f"Length of w ({len(w)}), Ms ({len(Ms)}), and start ({len(start)}) should be equal"
 
     length = w.shape[1]
     Y = []
     M_ = max(Ms)
-    for j, M in zip(range(w.shape[0]), Ms):
+    for j, M in enumerate(Ms):
         X = []
         for i in range(M_ - M, length - M + 1):
             X.append(np.flipud(w[j, i:i + M]))
@@ -309,8 +304,8 @@ class RegressionData:
             self.tstart = self.tstart * len(stim_dims)
         if len(self.tstop) == 1:
             self.tstop = self.tstop * len(stim_dims)
-        assert len(self.tstop) == len(stim_dims)
         assert len(self.tstart) == len(stim_dims)
+        assert len(self.tstop) == len(stim_dims)
 
         # stim normalization
         if self.s_baseline is not None:
@@ -357,7 +352,8 @@ class RegressionData:
         # add corresponding covariate matrix
         stim_lens = [len(dim) if dim else 1 for dim in stim_dims]
         filter_lengths = np.repeat(np.asanyarray(self.filter_length), stim_lens)
-        _covariates = covariate_from_stim(stims, filter_lengths, self.start)
+        start = np.repeat(np.asanyarray(self.start), stim_lens)
+        _covariates = covariate_from_stim(stims, filter_lengths, start)
         i = 0
         covariates = []
         for dim, basis in zip(stim_dims, self.basis):
