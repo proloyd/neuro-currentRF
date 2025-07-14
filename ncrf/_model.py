@@ -41,8 +41,7 @@ def gaussian_basis(nlevel, span, stds=8.5):
     """
     logger = logging.getLogger(__name__)
     x = span
-    means = np.linspace(x[-1] / nlevel, x[-1] * (1 - 1 / nlevel), num=nlevel - 1)
-    # stds = 8.5
+    means = np.linspace(x[0] + x[-1] / nlevel, x[-1] * (1 - 1 / nlevel), num=nlevel-1)
     logger.info(f'Using gaussian std = {stds}')
     W = []
 
@@ -99,15 +98,17 @@ def proxg_group_opt(z, mu):
     return z
 
 
-def covariate_from_stim(stims, Ms):
+def covariate_from_stim(stims, Ms, start):
     """Form covariate matrix from stimulus
 
     parameters
     ----------
     stims : list of NDVar
         Predictor variables.
-    M : int
-        Order of filter.
+    Ms : list of int
+        Order of filters.
+    start : list of int
+        Starting times for TRFs (in samples)
 
     returns
     -------
@@ -115,7 +116,7 @@ def covariate_from_stim(stims, Ms):
         Covariate matrices.
     """
     ws = []
-    for stim in stims:
+    for i, stim in enumerate(stims):
         if stim.ndim == 1:
             w = stim.get_data((np.newaxis, 'time'))
         else:
@@ -124,15 +125,28 @@ def covariate_from_stim(stims, Ms):
         ws.append(w)
     w = ws[0] if len(ws) == 1 else np.concatenate(ws, 0)
 
+    assert len(w) == len(Ms) == len(start), f"Length of w ({len(w)}), Ms ({len(Ms)}), and start ({len(start)}) should be equal"
+
     length = w.shape[1]
     Y = []
     M_ = max(Ms)
-    for j, M in zip(range(w.shape[0]), Ms):
+    for j, M in enumerate(Ms):
         X = []
         for i in range(M_ - M, length - M + 1):
             X.append(np.flipud(w[j, i:i + M]))
-        Y.append(np.array(X))
+        X = np.array(X)
 
+        if start[j] != 0:
+            n_shift = abs(start[j])
+            delay_pad = np.zeros(shape=(n_shift, M))
+            if start[j] < 0: # -ve tstart -> shift covariate matrix left
+                X = np.concatenate([X, delay_pad])
+                X = X[n_shift:,:]
+            else: # +ve tstart -> shift covariate matrix right
+                X = np.concatenate([delay_pad, X])
+                X = X[:-n_shift,:]
+
+        Y.append(X)
     return Y
 
 
@@ -159,7 +173,7 @@ def _inv_sqrtm(m, return_eig=False):
 
 
 def _compute_gamma_i(z, x):
-    """ Comptes Gamma_i
+    """ Computes Gamma_i
 
     Gamma_i = Z**(-1/2) * ( Z**(1/2) X X' Z**(1/2)) ** (1/2) * Z**(-1/2)
            = V(E)**(-1/2)V' * ( V ((E)**(1/2)V' X X' V(E)**(1/2)) V')** (1/2) * V(E)**(-1/2)V'
@@ -220,10 +234,10 @@ class RegressionData:
 
     Parameters
     ----------
-    tstart : float
-        Start of the TRF in seconds.
-    tstop : float
-        Stop of the TRF in seconds.
+    tstart : float | list[float]
+        Start of the TRF in seconds. Can define multiple tstarts for more than 1 predictor.
+    tstop : float | list[float]
+        Stop of the TRF in seconds. Can define multiple tstops for more than 1 predictor.
     nlevel : int
         Decides the density of Gabor atoms. Bigger nlevel -> less dense basis.
         By default it is set to 1. ``nlevel > 2`` should be used with caution.
@@ -236,9 +250,7 @@ class RegressionData:
     _prewhitened = None
 
     def __init__(self, tstart, tstop, nlevel=1, baseline=None, scaling=None, stim_is_single=None, gaussian_fwhm=20.0):
-        if tstart != 0:
-            raise NotImplementedError("tstart != 0 is not implemented")
-        self.tstart = tstart
+        self.tstart = tstart if isinstance(tstart, collections.abc.Sequence) else [tstart]
         self.tstop = tstop if isinstance(tstop, collections.abc.Sequence) else [tstop]
         self.nlevel = nlevel
         self.s_baseline = baseline
@@ -287,9 +299,12 @@ class RegressionData:
                 stim_dims.append(dim)
             else:
                 raise ValueError(f"stim={stim}: stimulus with more than 2 dimensions")
-
+            
+        if len(self.tstart) == 1:
+            self.tstart = self.tstart * len(stim_dims)
         if len(self.tstop) == 1:
             self.tstop = self.tstop * len(stim_dims)
+        assert len(self.tstart) == len(stim_dims)
         assert len(self.tstop) == len(stim_dims)
 
         # stim normalization
@@ -307,13 +322,13 @@ class RegressionData:
         if self.tstep is None:
             # initialize time axis
             self.tstep = meg_time.tstep
-            start = int(round(self.tstart / self.tstep))
-            stop = [int(round(tstop / self.tstep)) for tstop in self.tstop]
-            self.filter_length = [stop_ - start + 1 for stop_ in stop]
+            self.start = [int(round(tstart / self.tstep)) for tstart in self.tstart]
+            self.stop = [int(round(tstop / self.tstep)) for tstop in self.tstop]
+            self.filter_length = np.subtract(self.stop, self.start) + 1
             # basis
             self.basis = []
-            for tstop, filter_length in zip(self.tstop, self.filter_length):
-                x = np.linspace(int(round(1000*self.tstart)), int(round(1000*tstop)), filter_length)
+            for tstart, tstop, filter_length in zip(self.tstart, self.tstop, self.filter_length):
+                x = np.linspace(int(round(1000*tstart)), int(round(1000*tstop)), filter_length)
                 self.basis.append(gaussian_basis(int(round((filter_length-1)/self.nlevel)), x))
             # stimuli
             self._stim_dims = stim_dims
@@ -335,11 +350,10 @@ class RegressionData:
             self._norm_factor = sqrt(y.shape[1])
 
         # add corresponding covariate matrix
-        # covariates = np.dot(covariate_from_stim(stims, self.filter_length),
-        #                     self.basis) / sqrt(y.shape[1])  # Mind the normalization
         stim_lens = [len(dim) if dim else 1 for dim in stim_dims]
         filter_lengths = np.repeat(np.asanyarray(self.filter_length), stim_lens)
-        _covariates = covariate_from_stim(stims, filter_lengths)
+        start = np.repeat(np.asanyarray(self.start), stim_lens)
+        _covariates = covariate_from_stim(stims, filter_lengths, start)
         i = 0
         covariates = []
         for dim, basis in zip(stim_dims, self.basis):
@@ -1106,19 +1120,16 @@ class NCRF:
         trf = [np.dot(x, basis.T) / self.lead_field_scaling for x, basis in zip(_trf, self._basis)]
 
         h = []
-        for x, dim, name in zip(trf, self._stim_dims, self._stim_names):
+        for x, dim, name, tstart in zip(trf, self._stim_dims, self._stim_names, self.tstart):
             if dim:
-                time = UTS(self.tstart, self.tstep, x.shape[-1])
+                time = UTS(tstart, self.tstep, x.shape[-1])
                 shared_dims = (*_shared_dims, time)
                 x = x.reshape((-1, *(map(len, shared_dims))))
                 dims = (dim, *shared_dims)
-
             else:
-                time = UTS(self.tstart, self.tstep, x.shape[-1])
+                time = UTS(tstart, self.tstep, x.shape[-1])
                 dims = (*_shared_dims, time)
                 x = x.reshape(*(map(len, dims)))
-                # x = trf[i]
-                # i += 1
             h.append(NDVar(x, dims, name=name))
 
         if self._stim_is_single:
