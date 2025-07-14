@@ -1,10 +1,9 @@
 # Author: Proloy Das <email:proloyd94@gmail.com>
-# License: BSD (3-clause) 
+# License: BSD (3-clause)
 """Module implementing the FASTA algorithm"""
 
 import numpy as np
 from math import sqrt
-from scipy import linalg
 import time
 
 import logging
@@ -220,7 +219,7 @@ class Fasta:
             self.backtracks = []
 
         start = time.time()
-        logger.debug(f"Iteration \t objective value \t step-size \t backtracking steps taken \t residual")
+        logger.debug("Iteration \t objective value \t step-size \t backtracking steps taken \t residual")
         for i in range(self.n_iter):
             coefs_next, objective_next, sub_grad, tau, n_backtracks = _update_coefs(coefs_current, tau_current,
                                                                                     grad_current, self.prox, self.f,
