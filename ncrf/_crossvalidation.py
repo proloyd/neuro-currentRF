@@ -1,5 +1,5 @@
 # Author: Proloy Das <email:proloyd94@gmail.com>
-# License: BSD (3-clause) 
+# License: BSD (3-clause)
 import os
 from math import ceil
 from multiprocessing import Process, Queue
@@ -8,7 +8,6 @@ from typing import List
 
 from eelbrain._config import CONFIG
 import numpy as np
-from scipy import signal
 from tqdm import tqdm
 
 
@@ -29,6 +28,7 @@ class CVResult:
     l2_error: float
         self explanatory
     """
+
     def __init__(self, mu, weighted_l2_error, estimation_stability, cross_fit, l2_error):
         self.mu = mu
         self.weighted_l2_error = weighted_l2_error
@@ -136,9 +136,9 @@ class TimeSeriesSplit:
         for i in range(self.p, 0, -1):
             test_mask = np.zeros(len(X), dtype=bool)
             train_mask = np.ones(len(X), dtype=bool)
-            train_mask[-(i*n_v+self.d):] = False
+            train_mask[-(i * n_v + self.d):] = False
             if i == 1:
-                test_mask[-i*n_v:] = True
+                test_mask[-i * n_v:] = True
             else:
                 test_mask[-i * n_v:-(i - 1) * n_v] = True
             yield (train_mask, test_mask)

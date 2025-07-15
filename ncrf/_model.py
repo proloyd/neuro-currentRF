@@ -1,6 +1,6 @@
 # Authors: Proloy Das <email:proloyd94@gmail.com>
 #          Christian Brodbeck <email:brodbecc@mcmaster.ca>
-# License: BSD (3-clause) 
+# License: BSD (3-clause)
 import time
 import copy
 import collections
@@ -41,7 +41,7 @@ def gaussian_basis(nlevel, span, stds=8.5):
     """
     logger = logging.getLogger(__name__)
     x = span
-    means = np.linspace(x[0] + x[-1] / nlevel, x[-1] * (1 - 1 / nlevel), num=nlevel-1)
+    means = np.linspace(x[0] + x[-1] / nlevel, x[-1] * (1 - 1 / nlevel), num=nlevel - 1)
     logger.info(f'Using gaussian std = {stds}')
     W = []
 
@@ -139,12 +139,12 @@ def covariate_from_stim(stims, Ms, start):
         if start[j] != 0:
             n_shift = abs(start[j])
             delay_pad = np.zeros(shape=(n_shift, M))
-            if start[j] < 0: # -ve tstart -> shift covariate matrix left
+            if start[j] < 0:  # -ve tstart -> shift covariate matrix left
                 X = np.concatenate([X, delay_pad])
-                X = X[n_shift:,:]
-            else: # +ve tstart -> shift covariate matrix right
+                X = X[n_shift:, :]
+            else:  # +ve tstart -> shift covariate matrix right
                 X = np.concatenate([delay_pad, X])
-                X = X[:-n_shift,:]
+                X = X[:-n_shift, :]
 
         Y.append(X)
     return Y
@@ -299,7 +299,7 @@ class RegressionData:
                 stim_dims.append(dim)
             else:
                 raise ValueError(f"stim={stim}: stimulus with more than 2 dimensions")
-            
+
         if len(self.tstart) == 1:
             self.tstart = self.tstart * len(stim_dims)
         if len(self.tstop) == 1:
@@ -328,8 +328,8 @@ class RegressionData:
             # basis
             self.basis = []
             for tstart, tstop, filter_length in zip(self.tstart, self.tstop, self.filter_length):
-                x = np.linspace(int(round(1000*tstart)), int(round(1000*tstop)), filter_length)
-                self.basis.append(gaussian_basis(int(round((filter_length-1)/self.nlevel)), x))
+                x = np.linspace(int(round(1000 * tstart)), int(round(1000 * tstop)), filter_length)
+                self.basis.append(gaussian_basis(int(round((filter_length - 1) / self.nlevel)), x))
             # stimuli
             self._stim_dims = stim_dims
             self._stim_names = [x.name for x in stims]
@@ -343,7 +343,7 @@ class RegressionData:
         # add meg data
         m = max([basis.shape[0] for basis in self.basis])
         y = meg.get_data(('sensor', 'time'))
-        y = y[:, m-1:].astype(np.float64)
+        y = y[:, m - 1:].astype(np.float64)
         self.meg.append(y / sqrt(y.shape[1]))  # Mind the normalization
 
         if self._norm_factor is None:
@@ -358,7 +358,7 @@ class RegressionData:
         covariates = []
         for dim, basis in zip(stim_dims, self.basis):
             l = len(dim) if dim else 1
-            covariates.extend([np.dot(x, basis) / sqrt(y.shape[1]) for x in _covariates[i:i+l]])
+            covariates.extend([np.dot(x, basis) / sqrt(y.shape[1]) for x in _covariates[i:i + l]])
             # Mind the normalization
             i += l
         self._n_predictor_variables = len(covariates)
@@ -433,7 +433,7 @@ class RegressionData:
             s_normalization = np.asanyarray(self.s_normalization).mean(axis=0)
             for basis_length, norm in zip(basis_lengths, s_normalization):
                 for covariates in self.covariates:
-                    covariates[:, start:start+basis_length] /= norm
+                    covariates[:, start:start + basis_length] /= norm
                 start += basis_length
 
 
@@ -624,7 +624,7 @@ class NCRF:
             self.Sigma_b.append(s.copy())
 
         # initializing \Theta
-        l = sum([basis.shape[1]*(len(dim) if dim else 1) for basis, dim in zip(data.basis, data._stim_dims)])
+        l = sum([basis.shape[1] * (len(dim) if dim else 1) for basis, dim in zip(data.basis, data._stim_dims)])
         self.theta = np.zeros((len(self.source) * dc, l), dtype=np.float64)
 
     def _set_mu(self, mu, data):
@@ -663,7 +663,7 @@ class NCRF:
             n_iterc = self.n_iterc
 
         logger.debug('Champagne Iterations start:')
-        logger.debug(f'trial \t time taken')
+        logger.debug('trial \t time taken')
         for key, (meg, covariates) in enumerate(data):
             start = time.time()
             meg = meg[idx]
@@ -733,7 +733,7 @@ class NCRF:
             self.Gamma[key] = gamma
             self.Sigma_b[key] = sigma_b
             end = time.time()
-            logger.debug(f'{key} \t {end-start}')
+            logger.debug(f'{key} \t {end - start}')
 
     def fit(self, data, mu='auto', do_crossvalidation=False, tol=1e-5, verbose=False, use_ES=False, mus=None, n_splits=None, n_workers=None,
             compute_explained_variance=False):
@@ -814,9 +814,7 @@ class NCRF:
             if use_ES:
                 cv_results_ = sorted(self._cv_results, key=attrgetter('mu'))
                 if mu == cv_results[-1].mu:
-                    logger.info(f'\nCVmu is {best_cv.mu}: could not find mu based on estimation' \
-                                f' stability criterion'
-                                f'\nContinuing with cross-validation only.')
+                    logger.info(f'\nCVmu is {best_cv.mu}: could not find mu based on estimation stability criterion\nContinuing with cross-validation only.')
                 else:
                     best_es = None
                     for i, res in enumerate(cv_results_):
@@ -824,31 +822,29 @@ class NCRF:
                             continue
                         else:
                             try:
-                                if res.estimation_stability < cv_results_[i+1].estimation_stability:
+                                if res.estimation_stability < cv_results_[i + 1].estimation_stability:
                                     best_es = res
                                     break
                             except IndexError:
                                 best_es = None
                     if best_es is None:
-                        logger.warning(f'\nNo ES minima found: could not find mu based on estimation'
-                                       f' stability criterion. '
-                                       f'\nContinuing with cross-validation only.')
+                        logger.warning('\nNo ES minima found: could not find mu based on estimation stability criterion.\nContinuing with cross-validation only.')
                     else:
                         mu = best_es.mu
 
         else:
             # use the passed mu
             if mu is None:
-                raise ValueError(f'mu needs mu to be specified if not \'auto\'')
+                raise ValueError('mu needs mu to be specified if not \'auto\'')
 
         self._set_mu(mu, data)
 
         if self.space:
-            g_funct = lambda x: g_group(x, self.mu)
-            prox_g = lambda x, t: proxg_group_opt(x, self.mu * t)
+            def g_funct(x): return g_group(x, self.mu)
+            def prox_g(x, t): return proxg_group_opt(x, self.mu * t)
         else:
-            g_funct = lambda x: g(x, self.mu)
-            prox_g = lambda x, t: shrink(x, self.mu * t)
+            def g_funct(x): return g(x, self.mu)
+            def prox_g(x, t): return shrink(x, self.mu * t)
 
         theta = self.theta
 
@@ -881,7 +877,7 @@ class NCRF:
 
             self.objective_vals.append(self.eval_obj(data))
 
-            logger.debug(f'{myname}:{i} \t {self.objective_vals[-1]} \t {self.err[-1]*100}')
+            logger.debug(f'{myname}:{i} \t {self.objective_vals[-1]} \t {self.err[-1] * 100}')
 
         self.residual = self.eval_obj(data)
         self._copy_from_data(data)
@@ -963,7 +959,6 @@ class NCRF:
         -------
             float
         """
-        residual = 0
         ll2 = 0
         logdet = 0
         for key, (meg, covariate) in enumerate(data):
@@ -1068,7 +1063,7 @@ class NCRF:
                 if self.space is None:
                     theta[i] = 0
                 else:
-                    theta[i*len(self.space):(i+1)*len(self.space)] = 0
+                    theta[i * len(self.space):(i + 1) * len(self.space)] = 0
                 y = W_meg - np.dot(np.dot(W_leadfield, theta), covariate.T)
                 temp[i] += np.nansum((np.var(y, axis=1) - explained_variance) / total_var) / W_meg.shape[0]  # + np.log(
                 # np.diag(L)).sum()
@@ -1251,7 +1246,7 @@ class NCRF:
 
     def cv_info(self):
         if self._cv_results is None:
-            raise ValueError(f"CV: no cross-validation was performed. Use mu='auto' to perform cross-validation.")
+            raise ValueError("CV: no cross-validation was performed. Use mu='auto' to perform cross-validation.")
         cv_results = sorted(self._cv_results, key=attrgetter('mu'))
         criteria = ('cross-fit', 'l2/mu')
         best_mu = {criterion: self.cv_mu(criterion) for criterion in criteria}
@@ -1272,7 +1267,7 @@ class NCRF:
         mus = [res.mu for res in self._cv_results]
         warnings = []
         if self.mu == min(mus):
-            warnings.append(f"Best mu is smallest mu")
+            warnings.append("Best mu is smallest mu")
         if warnings:
             table.caption(f"Warnings: {'; '.join(warnings)}")
         return table

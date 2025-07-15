@@ -1,5 +1,5 @@
 # Author: Proloy Das <email:proloyd94@gmail.com>
-# License: BSD (3-clause) 
+# License: BSD (3-clause)
 import os
 import pooch
 import certifi
@@ -49,10 +49,10 @@ def fetch_dataset(force_download=False):
             f"latest version is {want_version}"
         )
         force_download = True
-    
+
     if not outdated and not force_download:
         return final_path
-    
+
     # Prepare pooch to fetch the data
     processor = pooch.Untar(extract_dir=root_dir)
     downloader_params = dict(timeout=15, progressbar=True)

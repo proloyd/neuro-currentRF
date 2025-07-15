@@ -75,7 +75,7 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
     n_workers : int (optional)
         Number of workers to spawn for cross-validation. If None, it will use ``cpu_count/2``.
     use_ES : bool (optional)
-        Use estimation stability criterion :cite:`limEstimationStabilityCrossValidation2016` to 
+        Use estimation stability criterion :cite:`limEstimationStabilityCrossValidation2016` to
         choose the best ``mu``. (False, by default)
     gaussian_fwhm : float (optional)
         Specifies the full width half maximum (fwmh) for the Gaussian kernel (used as elements of
