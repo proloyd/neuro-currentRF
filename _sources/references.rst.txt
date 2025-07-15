@@ -1,0 +1,6 @@
+
+^^^^^^^^^^
+references
+^^^^^^^^^^
+.. bibliography::
+   :cited:
