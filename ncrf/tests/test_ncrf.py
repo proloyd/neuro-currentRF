@@ -1,5 +1,5 @@
 # Author: Proloy Das <email:proloyd94@gmail.com>
-# License: BSD (3-clause) 
+# License: BSD (3-clause)
 import pickle
 import numpy as np
 
@@ -50,7 +50,7 @@ def test_ncrf():
     np.testing.assert_equal(model._stim_baseline[0], stim.mean())
     np.testing.assert_equal(model._stim_scaling[0], stim.std())
     np.testing.assert_allclose(model.h[0].norm('time').norm('source').norm('space'), 7.0088e-10, rtol=0.001)
-    
+
     # 2 stimuli, different tstarts (-ve)
     diff = stim.diff('time')
     stim2 = concatenate([diff.clip(0), diff.clip(max=0)], Categorial('rep', ['on', 'off']))
