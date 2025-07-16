@@ -1,6 +1,7 @@
 # Author: Proloy Das <email:proloyd94@gmail.com>
 # License: BSD (3-clause)
 import os
+import pickle
 import pooch
 import certifi
 import operator
@@ -22,6 +23,9 @@ archive_name = f"NCRF-testing-data-{RELEASE}.tar.gz"
 url = f"https://codeload.github.com/proloyd/NCRF-testing-data/tar.gz/{RELEASE}"
 known_hash = "sha256:eb9449d0f34eef1a72599a212d10e9b2d5a2a00cc08743db675f4e9248e68f7e"
 folder_name = "ncrf-testing-data"
+
+# names for lading data
+names = ('meg', 'stim', 'fwd_sol', 'emptyroom')
 
 
 def fetch_dataset(force_download=False):
@@ -90,3 +94,14 @@ def fetch_dataset(force_download=False):
     rmtree(final_path, ignore_errors=True)
     os.replace(root_dir / TESTING_VERSIONED, final_path)
     return final_path
+
+
+def load(name):
+    folder_name = fetch_dataset()
+    if name in names:
+        fname = os.path.join(folder_name, f"{name}.pickled")
+    else:
+        raise ValueError(f"{name}: not found, check dataset version")
+    with open(fname, 'rb') as f:
+        v = pickle.load(f)
+    return v
