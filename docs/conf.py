@@ -9,6 +9,7 @@ import sys
 from datetime import date
 from importlib import import_module
 
+import eelbrain
 from intersphinx_registry import get_intersphinx_mapping
 # from sphinx_gallery.sorting import FileNameSortKey
 
@@ -33,6 +34,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
+    'sphinx_gallery.gen_gallery',
     "sphinxcontrib.bibtex",
     "numpydoc",
     "sphinx.ext.githubpages",  # .nojekyll file on generated HTML directory to publish the document on GitHub Pages. 
@@ -116,6 +118,19 @@ numpydoc_xref_aliases = {
     "time": "eelbrain.UTS"
 
 }
+
+# -- sphinx-gallery
+
+def use_pyplot(gallery_conf, fname):
+    eelbrain.configure(frame=False)
+
+sphinx_gallery_conf = {
+    'examples_dirs': '../examples',   # path to your example scripts
+    'filename_pattern': '/',
+    'gallery_dirs': 'auto_examples',  # path to where to save gallery generated output
+    'reset_modules': ('matplotlib', use_pyplot),
+}
+
 
 # -- sphinxcontrib-bibtex --------------------------------------------------------------
 bibtex_bibfiles = ["references.bib"]

@@ -16,6 +16,7 @@ This repository contains the implementation of our direct TRF estimation algorit
    installing
    changes
    development
+   auto_examples/index
    references
 
 
