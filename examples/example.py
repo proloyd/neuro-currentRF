@@ -210,9 +210,13 @@ lf = eelbrain.load.fiff.forward_operator(fwd_fixed, src='ico-4', subjects_dir=su
 ###############################################################################
 # NCRF estimation
 # ---------------
-# Now that we have all the required NDvars, we can learn the neuro-current response functions [2]_ from the data. 
-# For this example, we use a fixed mu, but for publication purposes you need to choose mu by cross-validation.
-# To do so, set ``mu='auto'``.
+# Now that we have all the required data to estimate neuro-current response functions [2]_.
+# For this example, we use a fixed regularization parameter (``mu``),
+# to speed up the estimation.
+# For a real experiment, the optimal ``mu`` would be determined by cross-validation.
+# To do this, use the same code as below, but set ``mu='auto'``.
+# The optimal ``mu`` will then be stored in ``model.mu``
+# (this is how the ``mu`` used here was determined).
 
 # To speed up the example, we cache the file:
 ncrf_file = data_path / 'MEG' / 'bst_auditory' / 'oddball_ncrf.pickle'
@@ -221,8 +225,8 @@ if ncrf_file.exists():
 else:
     model = fit_ncrf(
         meg, [stim1, stim2], lf, noise_cov, 0, 0.8,
-        in_place=False, mu=0.001, verbose=True,
-        n_iter=5, n_iterc=10, n_iterf=100,
+        in_place=False, mu=0.0001756774187547859,
+        n_iter=5, n_iterc=10, n_iterf=100, verbose=True,
     )
     eelbrain.save.pickle(model, ncrf_file)
 
