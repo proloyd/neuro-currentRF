@@ -30,7 +30,7 @@ gh_url = ""
 # with Sphinx (named "sphinx.ext.*") or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosectionlabel",
+    # "sphinx.ext.autosectionlabel",  # conflict with sphinx-gallery
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
@@ -124,7 +124,6 @@ numpydoc_xref_aliases = {
     "case": "eelbrain.Case",
     "sensor": "eelbrain.Sensor",
     "time": "eelbrain.UTS"
-
 }
 
 # -- sphinx-gallery
