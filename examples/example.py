@@ -259,7 +259,8 @@ p = eelbrain.plot.Butterfly(h)
 
 ###############################################################################
 # The following code for plotting the anatomical localization
-# is commented because the :mod:`mayavi` based plots do not
+# is commented because the `Mayavi <https://docs.enthought.com/mayavi/mayavi>`_
+# based plots do not
 # work reliably in the automatic documentation.
 # Uncomment it to create anatomical plots.
 #

@@ -96,7 +96,6 @@ intersphinx_mapping = get_intersphinx_mapping(
 )
 intersphinx_mapping.update({
     "eelbrain": ("https://eelbrain.readthedocs.io/en/stable", None),
-    "mayavi": ("https://docs.enthought.com/mayavi/mayavi", None),
     'surfer': ('https://pysurfer.github.io', None),
 })
 intersphinx_timeout = 5
