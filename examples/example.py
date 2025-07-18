@@ -3,7 +3,7 @@ Oddball Tones Example
 =====================
 Estimate NCRFs for standard and oddball tones.
 
-For this tutorial, we use the auditory Brainstorm tutorial dataset [1]_ that is available as a part of the Brainstorm software.
+For this tutorial, we use the auditory Brainstorm tutorial dataset :cite:`Brainstorm` that is available as a part of the Brainstorm software.
 
 .. contents:: Contents
    :local:
@@ -283,8 +283,3 @@ p = eelbrain.plot.Butterfly(h)
 # plots with :func:`eelbrain.plot.brain.butterfly`:
 
 # brain, butterfly = eelbrain.plot.brain.butterfly(h0)
-
-###############################################################################
-# References
-# ----------
-# .. [1] Tadel F, Baillet S, Mosher JC, Pantazis D, Leahy RM. Brainstorm: A User-Friendly Application for MEG/EEG Analysis. Computational Intelligence and Neuroscience, vol. 2011, Article ID 879716, 13 pages, 2011. doi:10.1155/2011/879716
