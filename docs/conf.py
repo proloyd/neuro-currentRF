@@ -61,7 +61,9 @@ default_role = "autolink"
 # list of warning types to suppress
 suppress_warnings = [
     "config.cache",
-    'autosectionlabel',
+    # Sphinx-gallery creates duplicate labels:
+    'autosectionlabel.sg_execution_times',
+    'autosectionlabel.auto_examples/sg_execution_times',
 ]
 
 # -- Options for HTML output -------------------------------------------------
