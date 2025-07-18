@@ -1,5 +1,5 @@
-want to contribute?
-===================
+Contributing
+============
 Clone the GitHub repository and change the working directory:
 
 ``git clone https://github.com/proloyd/neuro-currentRF.git``

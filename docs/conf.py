@@ -9,6 +9,7 @@ import sys
 from datetime import date
 from importlib import import_module
 
+import eelbrain
 from intersphinx_registry import get_intersphinx_mapping
 # from sphinx_gallery.sorting import FileNameSortKey
 
@@ -29,10 +30,11 @@ gh_url = ""
 # with Sphinx (named "sphinx.ext.*") or your custom ones.
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosectionlabel",
+    # "sphinx.ext.autosectionlabel",  # conflict with sphinx-gallery
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
+    'sphinx_gallery.gen_gallery',
     "sphinxcontrib.bibtex",
     "numpydoc",
     "sphinx.ext.githubpages",  # .nojekyll file on generated HTML directory to publish the document on GitHub Pages. 
@@ -57,7 +59,12 @@ modindex_common_prefix = [f"{package}."]
 default_role = "autolink"
 
 # list of warning types to suppress
-suppress_warnings = ["config.cache"]
+suppress_warnings = [
+    "config.cache",
+    # Sphinx-gallery creates duplicate labels:
+    'autosectionlabel.sg_execution_times',
+    'autosectionlabel.auto_examples/sg_execution_times',
+]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -89,7 +96,10 @@ intersphinx_mapping = get_intersphinx_mapping(
         "numba",
     }
 )
-intersphinx_mapping["eelbrain"] = ("https://eelbrain.readthedocs.io/en/stable", None)
+intersphinx_mapping.update({
+    "eelbrain": ("https://eelbrain.readthedocs.io/en/stable", None),
+    'surfer': ('https://pysurfer.github.io', None),
+})
 intersphinx_timeout = 5
 
 # x-ref
@@ -114,8 +124,20 @@ numpydoc_xref_aliases = {
     "case": "eelbrain.Case",
     "sensor": "eelbrain.Sensor",
     "time": "eelbrain.UTS"
-
 }
+
+# -- sphinx-gallery
+
+def use_pyplot(gallery_conf, fname):
+    eelbrain.configure(frame=False)
+
+sphinx_gallery_conf = {
+    'examples_dirs': '../examples',   # path to your example scripts
+    'filename_pattern': '/',
+    'gallery_dirs': 'auto_examples',  # path to where to save gallery generated output
+    'reset_modules': ('matplotlib', use_pyplot),
+}
+
 
 # -- sphinxcontrib-bibtex --------------------------------------------------------------
 bibtex_bibfiles = ["references.bib"]

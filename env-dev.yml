@@ -4,4 +4,12 @@ name: ncrf
 channels:
 - conda-forge
 dependencies:
+- pip
 - eelbrain >= 0.34
+  # docs
+- sphinx
+- sphinx-gallery
+- numpydoc
+- pip:
+  - intersphinx_registry
+  - sphinxcontrib.bibtex
