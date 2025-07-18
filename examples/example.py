@@ -1,7 +1,7 @@
-# author: proloy Das <proloy@umd.edu>
 """
 Oddball Tones Example
 =====================
+Estimate NCRFs for standard and oddball tones.
 
 For this tutorial, we use the auditory Brainstorm tutorial dataset [1]_ that is available as a part of the Brainstorm software.
 
@@ -12,7 +12,11 @@ For this tutorial, we use the auditory Brainstorm tutorial dataset [1]_ that is 
    Downloading the dataset requires answering an interactive prompt (see
    :func:`mne.datasets.brainstorm.bst_auditory.data_path`).
 """
-# sphinx_gallery_thumbnail_number = 2
+# Authors: Proloy Das <proloy@umd.edu>
+#          Christian Brodbeck <brodbecc@mcmaster.ca>
+#
+# sphinx_gallery_thumbnail_number = 3
+
 import numpy as np
 import pandas as pd
 import eelbrain
@@ -23,7 +27,7 @@ from ncrf import fit_ncrf
 # Preprocessing
 # -------------
 # Preprocess MEG Data: low pass filtering, power line attenuation, downsampling, etc.
-# We broadly follow [this mne-python tutorial](https://mne.tools/stable/auto_tutorials/io/60_ctf_bst_auditory.html).
+# We broadly follow `this mne-python tutorial <https://mne.tools/stable/auto_tutorials/io/60_ctf_bst_auditory.html>`_.
 
 data_path = mne.datasets.brainstorm.bst_auditory.data_path()
 raw_fname = data_path / 'MEG' / 'bst_auditory' / 'S01_AEF_20131218_01.ds'
@@ -210,7 +214,7 @@ lf = eelbrain.load.fiff.forward_operator(fwd_fixed, src='ico-4', subjects_dir=su
 ###############################################################################
 # NCRF estimation
 # ---------------
-# Now that we have all the required data to estimate neuro-current response functions [2]_.
+# Now that we have all the required data to estimate NCRFs.
 # For this example, we use a fixed regularization parameter (``mu``),
 # to speed up the estimation.
 # For a real experiment, the optimal ``mu`` would be determined by cross-validation.
@@ -243,17 +247,31 @@ model.h
 ###############################################################################
 # Visualization
 # -------------
-# Visualization can be done eelbrain plot functions. We only plot `h[0]` here, please try `h[1]` when you are playing with the code.
+# A butterfly plot shows weights in all sources over time.
+# This is good for forming a quick impression of important time lags,
+# or peaks in the response:
 # 
 # .. note::
-#    Since the estimates are sparse over the cortical mantle, you can smooth the NCRFs over sources to make the visualization more intuitive (see third line of the following code).
+#    Since the estimates are sparse over cortical locations, smoothing the NCRFs over sources to make the visualization more intuitive.
 
-# The following code is for plotting in jupyter notebook, 
-# for ipython we can use interactive time-liked plots (commented lines)
-h0 = model.h[0].smooth('source', 0.01, 'gaussian')
-p = eelbrain.plot.Butterfly(h0)
+h = [h.smooth('source', 0.01, 'gaussian') for h in model.h]
+p = eelbrain.plot.Butterfly(h)
 
-# FIXME:  Mayavi plots
+###############################################################################
+# The following code for plotting the anatomical localization
+# is commented because the :mod:`mayavi` based plots do not
+# work reliably in the automatic documentation.
+# Uncomment it to create anatomical plots.
+#
+# A single time point can be visualized with the PySurfer (:mod:`surfer`)
+# based :func:`eelbrain.plot.brain.brain`:
+
+# brain = eelbrain.plot.brain.brain(h[0].sub(time=0.140), vmax=2e-11, surf='pial')
+
+###############################################################################
+# An :class:`eelbrain.plot.brain.SequencePlotter` can be used to plot a
+# sequence of brain images, for example in a jupyter notebook:
+
 # h_binned = h0.bin(0.1, 0.1, 0.4, 'extrema')
 # sp = eelbrain.plot.brain.SequencePlotter()
 # sp.set_brain_args(surf='inflated')
@@ -261,15 +279,12 @@ p = eelbrain.plot.Butterfly(h0)
 # p = sp.plot_table(view='lateral')
 
 ###############################################################################
-# .. note::
-#    In an iPython (command line) session, you can use :func:`eelbrain.plot.brain.butterfly`
-#    to create an interactive window-based plot::
-#
-#        bp = eelbrain.plot.brain.butterfly(h0)
-#
-#
+# In an interactive iPython session, we can also use interactive time-linked
+# plots with :func:`eelbrain.plot.brain.butterfly`:
+
+# brain, butterfly = eelbrain.plot.brain.butterfly(h0)
+
+###############################################################################
 # References
 # ----------
 # .. [1] Tadel F, Baillet S, Mosher JC, Pantazis D, Leahy RM. Brainstorm: A User-Friendly Application for MEG/EEG Analysis. Computational Intelligence and Neuroscience, vol. 2011, Article ID 879716, 13 pages, 2011. doi:10.1155/2011/879716
-# 
-# .. [2] Das P, Brodbeck C, Simon JZ, Babadi B. Neuro-Current Response Functions: A Unified Approach to MEG Source Analysis under the Continuous Stimuli Paradigm. BioRxiv. 2019. doi:10.1101/761999
