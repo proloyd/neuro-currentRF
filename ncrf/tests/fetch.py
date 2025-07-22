@@ -25,7 +25,7 @@ known_hash = "sha256:eb9449d0f34eef1a72599a212d10e9b2d5a2a00cc08743db675f4e9248e
 folder_name = "ncrf-testing-data"
 
 # names for lading data
-names = ('meg', 'stim', 'fwd_sol', 'emptyroom')
+_NAMES = ('meg', 'stim', 'fwd_sol', 'emptyroom')
 
 
 def fetch_dataset(force_download=False):
@@ -98,7 +98,7 @@ def fetch_dataset(force_download=False):
 
 def load(name):
     folder_name = fetch_dataset()
-    if name in names:
+    if name in _NAMES:
         fname = os.path.join(folder_name, f"{name}.pickled")
     else:
         raise ValueError(f"{name}: not found, check dataset version")
