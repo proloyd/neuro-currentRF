@@ -29,7 +29,7 @@ from ncrf import fit_ncrf
 # Preprocess MEG Data: low pass filtering, power line attenuation, downsampling, etc.
 # We broadly follow `this mne-python tutorial <https://mne.tools/stable/auto_tutorials/io/60_ctf_bst_auditory.html>`_.
 
-data_path = mne.datasets.brainstorm.bst_auditory.data_path()
+data_path = mne.datasets.brainstorm.bst_auditory.data_path(accept=True)
 raw_fname = data_path / 'MEG' / 'bst_auditory' / 'S01_AEF_20131218_01.ds'
 raw = mne.io.read_raw_ctf(raw_fname, preload=False)
 n_times_run1 = raw.n_times
