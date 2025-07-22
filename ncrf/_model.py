@@ -131,7 +131,8 @@ def covariate_from_stim(stims, Ms, starts):
     M_max = max(Ms)
     for w, start, M in zip(ws, starts, Ms):
         X = np.array(
-            [w[i:i + M][::-1] for i in range(M_max - M, length - M + 1)]
+            [w[i + M:i:-1] if i > -1 else w[i + M::-1]
+             for i in range(M_max - M - 1, length - M)]
         )
         if start != 0:
             # -ve tstart -> shift covariate matrix left
