@@ -98,7 +98,7 @@ def proxg_group_opt(z, mu):
     return z
 
 
-def covariate_from_stim(stims, Ms, start):
+def covariate_from_stim(stims, Ms, starts):
     """Form covariate matrix from stimulus
 
     parameters
@@ -116,36 +116,32 @@ def covariate_from_stim(stims, Ms, start):
         Covariate matrices.
     """
     ws = []
-    for i, stim in enumerate(stims):
+    for stim in stims:
         if stim.ndim == 1:
             w = stim.get_data((np.newaxis, 'time'))
         else:
             dimnames = stim.get_dimnames(last='time')
             w = stim.get_data(dimnames)
         ws.append(w)
-    w = ws[0] if len(ws) == 1 else np.concatenate(ws, 0)
+    ws = ws[0] if len(ws) == 1 else np.concatenate(ws, 0)
+    assert len(ws) == len(Ms) == len(starts), f"Length of w ({len(ws)}), Ms ({len(Ms)}), and start ({len(starts)}) should be equal"
 
-    assert len(w) == len(Ms) == len(start), f"Length of w ({len(w)}), Ms ({len(Ms)}), and start ({len(start)}) should be equal"
-
-    length = w.shape[1]
+    length = ws.shape[1]
     Y = []
-    M_ = max(Ms)
-    for j, M in enumerate(Ms):
-        X = []
-        for i in range(M_ - M, length - M + 1):
-            X.append(np.flipud(w[j, i:i + M]))
-        X = np.array(X)
-
-        if start[j] != 0:
-            n_shift = abs(start[j])
-            delay_pad = np.zeros(shape=(n_shift, M))
-            if start[j] < 0:  # -ve tstart -> shift covariate matrix left
-                X = np.concatenate([X, delay_pad])
-                X = X[n_shift:, :]
-            else:  # +ve tstart -> shift covariate matrix right
-                X = np.concatenate([delay_pad, X])
-                X = X[:-n_shift, :]
-
+    M_max = max(Ms)
+    for w, start, M in zip(ws, starts, Ms):
+        X = np.array(
+            [w[i + M:i:-1] if i > -1 else w[i + M::-1]
+             for i in range(M_max - M - 1, length - M)]
+        )
+        if start != 0:
+            # -ve tstart -> shift covariate matrix left
+            # +ve tstart -> shift covariate matrix right
+            X = np.roll(X, start, axis=0)
+            if start < 0:
+                X[start:] = 0
+            else:
+                X[:start] = 0
         Y.append(X)
     return Y
 
@@ -173,7 +169,7 @@ def _inv_sqrtm(m, return_eig=False):
 
 
 def _compute_gamma_i(z, x):
-    """ Computes Gamma_i
+    """Computes Gamma_i
 
     Gamma_i = Z**(-1/2) * ( Z**(1/2) X X' Z**(1/2)) ** (1/2) * Z**(-1/2)
            = V(E)**(-1/2)V' * ( V ((E)**(1/2)V' X X' V(E)**(1/2)) V')** (1/2) * V(E)**(-1/2)V'
