@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 
 from ncrf import fit_ncrf
-from .fetch import load
+from ncrf.tests.fetch import load
 
 from eelbrain import Categorial, concatenate
 from eelbrain.testing import assert_dataobj_equal
@@ -28,6 +28,11 @@ def test_ncrf():
     np.testing.assert_equal(model._stim_baseline[0], stim_baseline)
     np.testing.assert_equal(model._stim_scaling[0], (stim - stim_baseline).abs().mean())
     np.testing.assert_allclose(model.h.norm('time').norm('source').norm('space'), 6.601677e-10, rtol=0.001)
+
+    # test without multiprocessing
+    model_no_mp = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu=0.0019444, n_iter=3, n_iterc=3,
+                           n_iterf=10, do_post_normalization=False, n_workers=0)
+    assert_dataobj_equal(model_no_mp.h, model.h)
 
     # test persistence
     model_2 = pickle.loads(pickle.dumps(model, pickle.HIGHEST_PROTOCOL))
