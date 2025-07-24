@@ -3,15 +3,10 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-import inspect
-import subprocess
-import sys
 from datetime import date
-from importlib import import_module
 
 import eelbrain
 from intersphinx_registry import get_intersphinx_mapping
-# from sphinx_gallery.sorting import FileNameSortKey
 
 import ncrf
 
