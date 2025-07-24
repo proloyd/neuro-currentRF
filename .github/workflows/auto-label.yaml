@@ -3,11 +3,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
   cancel-in-progress: true
 on:  # yamllint disable-line rule:truthy
-  pull_request_target
+- pull_request_target
 
 jobs:
-  pr:
+  labeler:
     permissions:
+      issues: write
       contents: read
       pull-requests: write
     runs-on: ubuntu-latest

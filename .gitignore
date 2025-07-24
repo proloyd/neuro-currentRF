@@ -1,7 +1,8 @@
-ncrf.egg-info/top_level.txt
-ncrf.egg-info/SOURCES.txt
-ncrf.egg-info/PKG-INFO
-ncrf.egg-info/dependency_links.txt
+docs/_build
+docs/api/generated
+docs/auto_examples
+docs/sg_execution_times.rst
+ncrf.egg-info
 fit_ncrf/*.log
 *.out
 *.so

@@ -1,4 +1,4 @@
-installing
+Installing
 ==========
 NCRF relies on: `Eelbrain` (`Download/ Installation Instructions <https://github.com/christianbrodbeck/Eelbrain/wiki/Installing#release>`_)
 
@@ -6,15 +6,13 @@ We recommend using `mamba` as package manager.
 
 After successfully installing Eelbrain, one can follow either of the methods to install different versions the repository
 
-Installing the release version
-******************************
-The following comment will install the latest released version:
 
-``pip install ncrf``
+Installing the latest version
+*****************************
+The following comment will install the latest version:
 
-NOTE: yet to be released on PyPI yet. 
+``pip install https://github.com/proloyd/neuro-currentRF/archive/refs/heads/master.zip``
 
-Or, 
 
 Development version from GitHub
 *******************************
@@ -29,6 +27,6 @@ Create an environment with the necessary dependencies (this assumes `mamba <http
 
 ``mamba env create --file=env-dev.yml``
 
-Then, install neuro-currentRF in development model using pip:
+Then, install neuro-currentRF in development mode using pip:
 
 ``pip install -e .``

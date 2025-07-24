@@ -1,7 +1,7 @@
-API References
-==============
+API Reference
+=============
 
-The ncrf module provide functions for fitting ncrfs from data.
+The ``ncrf`` module provide functions for fitting NCRFs from data.
 
 .. currentmodule:: ncrf
 
