@@ -747,6 +747,7 @@ class NCRF:
             mus: MusArg = None,
             n_splits: int = None,
             n_workers: int = None,
+            compute_explained_variance : bool = False,
     ):
         """Fit NCRF model to data
 
@@ -780,6 +781,8 @@ class NCRF:
             Number of workers to use for cross-validation.
             ``None`` to use ``cpu_count/2`` (default).
             ``0`` to run without :mod:`multiprocessing`.
+        compute_explained_variance
+            Compute voxel-wise explained variance.
         """
         # pre-whiten the object itself
         logger = logging.getLogger(__name__)
