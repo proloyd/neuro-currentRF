@@ -1,35 +1,45 @@
 # Author: Proloy Das <email:proloyd94@gmail.com>
 # License: BSD (3-clause)
+from __future__ import annotations
+
 import os
 from math import ceil
 from multiprocessing import Process, Queue
 import queue
-from typing import List
+from typing import TYPE_CHECKING, List, Sequence
 
 from eelbrain._config import CONFIG
 import numpy as np
 from tqdm import tqdm
 
+if TYPE_CHECKING:
+    from ._model import NCRF, RegressionData
+
 
 class CVResult:
-    """Object for storing cross-validation info
-
+    """Cross-validation results
 
     Parameters
     ----------
-    mu: float
+    mu
+        Optimal ``mu`` parameter.
+    weighted_l2_error
         self explanatory
-    weighted_l2_error: float
+    estimation_stability
         self explanatory
-    estimation_stability: float
+    cross_fit
         self explanatory
-    cross_fit: float
-        self explanatory
-    l2_error: float
-        self explanatory
+    l2_error
+        L2 error from the optimal ``mu``.
     """
 
-    def __init__(self, mu, weighted_l2_error, estimation_stability, cross_fit, l2_error):
+    def __init__(
+            self, mu: float,
+            weighted_l2_error: float,
+            estimation_stability: float,
+            cross_fit: float,
+            l2_error: float,
+    ):
         self.mu = mu
         self.weighted_l2_error = weighted_l2_error
         self.estimation_stability = 10 if np.isnan(estimation_stability) else estimation_stability  # replace Nan values with a big number
@@ -66,7 +76,14 @@ def start_workers(fun, data, n_split, tol, shared_job_q, shared_result_q, nprocs
     return procs
 
 
-def crossvalidate(model, data, mus, tol, n_splits, n_workers=None) -> List[CVResult]:
+def crossvalidate(
+        model: NCRF,
+        data: RegressionData,
+        mus: Sequence[float],
+        tol: float,
+        n_splits: int,
+        n_workers: int = None,
+) -> List[CVResult]:
     """used to perform cross-validation of cTRF model
 
     This function assumes `model` class has method _get_cvfunc(data, n_splits)
@@ -76,33 +93,30 @@ def crossvalidate(model, data, mus, tol, n_splits, n_workers=None) -> List[CVRes
 
     Parameters
     ----------
-    model: model instance
+    model
         the model to be validated, here `NCRF`. In addition to that it needs to
         support the :func:`copy.copy` function.
-    data: REGdata
+    data
         Data.
-    mus: list | ndarray  (floats)
-        The range of the regularizing weights.
-    tol : float
-            tolerence parameter. Decides when to stop outer iterations.
-    n_splits: int
+    mus
+        The range of the regularizing weights to test.
+    tol
+        Tolerance parameter. Decides when to stop outer iterations.
+    n_splits
         number of folds for cross-validation.
-    n_workers: int
-        number of workers to be used. If None, it will use ``cpu_count/2``.
+    n_workers
+        number of workers to be used. ``None`` to use ``cpu_count/2`` (default).
 
     Returns
     -------
-    esmu : float
-        The best weight.
-    cv_info : ndarray
-        Contains evaluated cross-validation metrics for ``mus``.
+    results : List[CVResult]
+        Cross-validation results.
     """
     prog = tqdm(total=len(mus), desc="Crossvalidation", unit='mu', unit_scale=True)
     if n_workers is None:
         n = CONFIG['n_workers'] or 1  # by default this is cpu_count()
         n_workers = ceil(n / 8)
 
-    # fun = model._get_cvfunc(data, n_splits, tol)
     fun = model.cvfunc
 
     job_q = Queue()
