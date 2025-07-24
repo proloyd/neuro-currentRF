@@ -747,7 +747,7 @@ class NCRF:
             mus: MusArg = None,
             n_splits: int = None,
             n_workers: int = None,
-            compute_explained_variance : bool = False,
+            compute_explained_variance: bool = False,
     ):
         """Fit NCRF model to data
 
