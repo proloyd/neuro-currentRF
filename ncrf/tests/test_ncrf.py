@@ -77,6 +77,5 @@ def test_ncrf():
     model.cv_info()
 
     # test without multiprocessing
-    model_no_mp = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu='auto', n_iter=1, n_iterc=2, n_iterf=2,
-                     n_workers=0, do_post_normalization=False)
+    model_no_mp = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu='auto', n_iter=1, n_iterc=2, n_iterf=2, n_workers=0, do_post_normalization=False)
     assert_dataobj_equal(model_no_mp.h, model.h)
