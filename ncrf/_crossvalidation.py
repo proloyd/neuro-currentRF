@@ -97,7 +97,7 @@ def crossvalidate(
         the model to be validated, here `NCRF`. In addition to that it needs to
         support the :func:`copy.copy` function.
     data
-        Data.
+        M/EEG data and the corresponding stimulus variables.
     mus
         The range of the regularizing weights to test.
     tol
@@ -105,7 +105,9 @@ def crossvalidate(
     n_splits
         number of folds for cross-validation.
     n_workers
-        number of workers to be used. ``None`` to use ``cpu_count/2`` (default).
+        Number of workers to use for cross-validation.
+        ``None`` to use ``cpu_count/2`` (default).
+        ``0`` to run without :mod:`multiprocessing`.
 
     Returns
     -------
@@ -117,7 +119,14 @@ def crossvalidate(
         n = CONFIG['n_workers'] or 1  # by default this is cpu_count()
         n_workers = ceil(n / 8)
 
-    fun = model.cvfunc
+    results = []
+
+    if n_workers == 0:
+        for mu in mus:
+            result = model.cvfunc(data, n_splits, tol, mu)
+            results.append(result)
+            prog.update(n=len(results))
+        return results
 
     job_q = Queue()
     result_q = Queue()
@@ -125,9 +134,8 @@ def crossvalidate(
     for mu in mus:
         job_q.put([mu])  # put the job as a list.
 
-    workers = start_workers(fun, data, n_splits, tol, job_q, result_q, n_workers)
+    workers = start_workers(model.cvfunc, data, n_splits, tol, job_q, result_q, n_workers)
 
-    results = []
     for _ in range(len(mus)):
         result = result_q.get()
         results.append(result)

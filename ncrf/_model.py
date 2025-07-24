@@ -766,7 +766,9 @@ class NCRF:
         n_splits : int
             k value used in k-fold cross-validation
         n_workers : int
-            number of workers to be used for cross-validation
+            Number of workers to use for cross-validation.
+            ``None`` to use ``cpu_count/2`` (default).
+            ``0`` to run without :mod:`multiprocessing`.
 
         ..[1] Lim, Chinghway, and Bin Yu. "Estimation stability with cross-validation (ESCV)."
         Journal of Computational and Graphical Statistics 25.2 (2016): 464-492.
