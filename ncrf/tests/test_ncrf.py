@@ -71,8 +71,7 @@ def test_ncrf():
     np.testing.assert_allclose(model.h[0].norm('time').norm('source').norm('space'), 5.9598e-10, rtol=0.001)
 
     # cross-validation
-    model = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu='auto', n_iter=1, n_iterc=2, n_iterf=2,
-                     n_workers=1, do_post_normalization=False)
+    model = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu='auto', n_iter=1, n_iterc=2, n_iterf=2, do_post_normalization=False)
     np.testing.assert_allclose(model.mu, 0.0203, rtol=0.001)
     model.cv_info()
 
