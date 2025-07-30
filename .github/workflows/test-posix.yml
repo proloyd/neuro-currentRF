@@ -41,6 +41,8 @@ jobs:
       name: Test with pytest and code-cov
       shell: bash -el {0}
       run: |
+        mkdir temp_dir
+        cd temp_dir
         pytest --cov --cov-report=xml --pyargs ncrf  # namespace vs module import?
     - if: ${{ matrix.cc }}
       name: Upload coverage to Codecov  
