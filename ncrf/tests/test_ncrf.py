@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 
 from ncrf import fit_ncrf
-from .fetch import load
+from ncrf.tests.fetch import load
 
 from eelbrain import Categorial, concatenate
 from eelbrain.testing import assert_dataobj_equal
@@ -71,7 +71,10 @@ def test_ncrf():
     np.testing.assert_allclose(model.h[0].norm('time').norm('source').norm('space'), 5.9598e-10, rtol=0.001)
 
     # cross-validation
-    model = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu='auto', n_iter=1, n_iterc=2, n_iterf=2,
-                     n_workers=1, do_post_normalization=False)
+    model = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu='auto', n_iter=1, n_iterc=2, n_iterf=2, do_post_normalization=False)
     np.testing.assert_allclose(model.mu, 0.0203, rtol=0.001)
     model.cv_info()
+
+    # test without multiprocessing
+    model_no_mp = fit_ncrf(meg, stim, fwd, emptyroom, tstop=0.2, normalize='l1', mu='auto', n_iter=1, n_iterc=2, n_iterf=2, n_workers=0, do_post_normalization=False)
+    assert_dataobj_equal(model_no_mp.h, model.h)
