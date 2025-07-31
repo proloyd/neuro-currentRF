@@ -5,7 +5,7 @@
 from typing import List
 import collections
 
-from eelbrain import NDVar
+from eelbrain import NDVar, Sensor
 from eelbrain._utils import natsorted
 from mne import Covariance
 import numpy as np
@@ -14,6 +14,48 @@ from ._model import NCRF, RegressionData
 
 
 DEFAULT_MUs = np.logspace(-3, -1, 7)
+
+def _handle_noise_channels(noise: [NDVar, Covariance, np.ndarray], sensor_dim: Sensor) -> np.ndarray:
+
+    if isinstance(noise, NDVar):
+
+        er = noise.get_data(('sensor', 'time'))
+        noise_cov = np.dot(er, er.T) / er.shape[1]
+
+    elif isinstance(noise, Covariance):
+        chs_noise = set(noise.ch_names)
+        chs_data = set(sensor_dim.names)
+        chs_both = sorted(chs_noise.intersection(chs_data))
+
+        if len(chs_both) < len(chs_data):
+            missing = sorted(chs_data - chs_noise)
+            raise RuntimeError(
+                f"Missing channels found: {', '.join(missing)}.\n"
+                            )
+
+        if list(sensor_dim.names) != chs_both:
+            index = np.array([noise.ch_names.index(ch) for ch in chs_both])
+            noise_cov = noise.data[index[:, np.newaxis], index]
+        else:
+            if noise['diag']:
+                squareMatrix = np.zeros((len(noise.data), len(noise.data)))
+                row, col = np.diag_indices(squareMatrix.shape[0])
+                squareMatrix[row, col] = noise.data
+                noise_cov = squareMatrix
+            else:
+                noise_cov = noise.data
+
+    elif isinstance(noise, np.ndarray):
+        n = len(sensor_dim)
+        if noise.shape != (n, n):
+            raise ValueError(f"noise = array of shape {noise.shape}; should be {(n, n)}")
+        noise_cov = noise
+
+    else:
+        raise TypeError(f"Invalid noise type: {type(noise)}. Must be NDVar, Covariance, or ndarray.")
+
+    return noise_cov
+
 
 
 def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
@@ -193,37 +235,8 @@ def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
     # import ipdb; ipdb.set_trace()
 
     # noise covariance
-    if isinstance(noise, NDVar):
-        er = noise.get_data(('sensor', 'time'))
-        noise_cov = np.dot(er, er.T) / er.shape[1]
-    elif isinstance(noise, Covariance):
-        # check for channel mismatch
-        chs_noise = set(noise.ch_names)
-        chs_data = set(ds.sensor_dim.names)
-        chs_both = natsorted(chs_noise.intersection(chs_data))
-        if len(chs_both) < len(chs_data):
-            missing = sorted(chs_data.difference(chs_noise))
-            raise NotImplementedError(f"Noise covariance is missing data for sensors {', '.join(missing)}")
-        elif len(chs_both) < len(chs_noise) or not np.all(ds.sensor_dim.names == chs_both):
-            index = np.array([noise.ch_names.index(ch) for ch in chs_both])
-            noise_cov = noise.data[index[:, np.newaxis], index]
-        else:
-            assert sorted(noise.ch_names) == chs_both
-            if noise['diag']:
-                squareMatrix = np.zeros([len(noise.data), len(noise.data)])
-                row, col = np.diag_indices(squareMatrix.shape[0])
-                squareMatrix[row, col] = noise.data
-                noise_cov = squareMatrix
-            else:
-                noise_cov = noise.data
-    elif isinstance(noise, np.ndarray):
-        n = len(ds.sensor_dim)
-        if noise.shape == (n, n):
-            noise_cov = noise
-        else:
-            raise ValueError(f'noise = array of shape {noise.shape}; should be {(n, n)}')
-    else:
-        raise TypeError(f'noise={noise!r}')
+
+    noise_cov = _handle_noise_channels(noise, ds.sensor_dim)
 
     # Regularizer Choice
     if isinstance(mu, (tuple, list, np.ndarray)):
