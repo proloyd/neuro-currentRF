@@ -215,22 +215,28 @@ lf = eelbrain.load.fiff.forward_operator(fwd_fixed, src='ico-4', subjects_dir=su
 # NCRF estimation
 # ---------------
 # Now that we have all the required data to estimate NCRFs.
-# For this example, we use a fixed regularization parameter (``mu``),
-# to speed up the estimation.
-# For a real experiment, the optimal ``mu`` would be determined by cross-validation.
-# To do this, use the same code as below, but set ``mu='auto'``.
-# The optimal ``mu`` will then be stored in ``model.mu``
-# (this is how the ``mu`` used here was determined).
+#
+# .. note::
+#    This example uses simplified settings to speed up estimation:
+#
+#    1) For this example, we use a fixed regularization parameter (``mu``).
+#    For a real experiment, the optimal ``mu`` would be determined by
+#    cross-validation (set ``mu='auto'``, which is the default).
+#    The optimal ``mu`` will then be stored in ``model.mu``
+#    (this is how the ``mu`` used here was determined).
+#
+#    2) The example forces the estimation to stop after fewer iterations than
+#    is recommended (``n_iter``). For stable models, we recommend to use the
+#    default setting (``n_iter=10``).
 
-# To speed up the example, we cache the file:
+# To speed up the example, we cache the NCRF:
 ncrf_file = data_path / 'MEG' / 'bst_auditory' / 'oddball_ncrf.pickle'
 if ncrf_file.exists():
     model = eelbrain.load.unpickle(ncrf_file)
 else:
     model = fit_ncrf(
-        meg, [stim1, stim2], lf, noise_cov, 0, 0.8,
-        in_place=False, mu=0.0001756774187547859,
-        n_iter=5, n_iterc=10, n_iterf=100, verbose=True,
+        meg, [stim1, stim2], lf, noise_cov, tstart=0, tstop=0.5,
+        mu=0.0001756774187547859, n_iter=5,
     )
     eelbrain.save.pickle(model, ncrf_file)
 
