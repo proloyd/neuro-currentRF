@@ -94,5 +94,4 @@ tracker = 'https://github.com/proloyd/neuro-currentRF/issues'
 include-package-data = false
 
 [tool.setuptools.packages.find]
-exclude = ['ncrf*tests']
 include = ['ncrf*']
