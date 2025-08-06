@@ -8,6 +8,7 @@ from functools import cached_property
 from math import sqrt, log10
 from multiprocessing import current_process
 from operator import attrgetter
+from typing import Sequence, Union
 
 from eelbrain import fmtxt, UTS, NDVar
 import numpy as np
@@ -22,7 +23,10 @@ from .dsyevh3C import compute_gamma_c
 
 import logging
 
+
 _R_tol = np.finfo(np.float64).eps * 1e2
+MuArg = Union[float, Sequence[float], str]
+MusArg = Union[Sequence[float], str]
 
 
 def gaussian_basis(nlevel, span, stds=8.5):
@@ -478,12 +482,13 @@ class NCRF:
     -----
     Usage:
 
-        1. Initialize :class:`NCRF` instance with desired properties
-        2. Initialize :class:`REG_Data` instance with desired properties
-        2. Call :meth:`REG_Data.add_data` once for each contiguous segment of MEG
-           data
-        3. Call :meth:`NCRF.fit` with REG_Data instance to estimate the cortical TRFs.
-        4. Access the cortical TRFs in :attr:`NCRF.h`.
+    1. Initialize :class:`RegressionData` instance with desired properties
+    2. Call :meth:`RegressionData.add_data` once for each contiguous
+       segment of MEG data
+    3. Initialize :class:`NCRF` instance with desired properties
+    4. Call :meth:`NCRF.fit` with the :class:`RegressionData` instance to
+       estimate the cortical TRFs.
+    5. Access the cortical TRFs in :attr:`NCRF.h`.
     """
     _name = 'cTRFs estimator'
     _cv_results = None
@@ -731,48 +736,54 @@ class NCRF:
             end = time.time()
             logger.debug(f'{key} \t {end - start}')
 
-    def fit(self, data, mu='auto', do_crossvalidation=False, tol=1e-5, verbose=False, use_ES=False, mus=None, n_splits=None, n_workers=None,
-            compute_explained_variance=False):
-        """cTRF estimator implementation
+    def fit(
+            self,
+            data: RegressionData,
+            mu: MuArg = 'auto',
+            do_crossvalidation: bool = False,
+            tol: float = 1e-5,
+            verbose: bool = False,
+            use_ES: bool = False,
+            mus: MusArg = None,
+            n_splits: int = None,
+            n_workers: int = None,
+            compute_explained_variance: bool = False,
+    ):
+        """Fit NCRF model to data
 
         Estimate both TRFs and source variance from the observed MEG data by solving
-        the Bayesian optimization problem mentioned in the paper:
-        P. Das, C. Brodbeck, J. Z. Simon, B. Babadi, Cortical Localization of the
-        Auditory Temporal Response Function from MEG via Non-Convex Optimization;
-        2018 Asilomar Conference on Signals, Systems, and Computers, Oct. 28–31,
-        Pacific Grove, CA(invited).
+        the Bayesian optimization problem formulated in :cite:`das2020neuro`.
 
         Parameters
         ----------
-        data : REG_Data instance
-            meg data and the corresponding stimulus variables
-        mu : float
-            regularization parameter,  promote temporal sparsity and provide guard against
-            over-fitting
+        data
+            M/EEG data and the corresponding stimulus variables.
+        mu
+            Regularization parameter; promote sparsity and guard against over-fitting
         do_crossvalidation : bool
             if True, from a wide range of regularizing parameters, the one resulting in
             the least generalization error in a k-fold cross-validation procedure is chosen.
             Unless specified the range and k is chosed from cofig.py. The user can also pass
             several keyword arguments to overwrite them.
-        tol : float (1e-4 Default)
+        tol
             tolerence parameter. Decides when to stop outer iterations.
-        verbose : Boolean
+        verbose
             If set True prints intermediate values of the cost functions.
             by Default it is set to be False
-        use_ES : Boolean
-            use estimation stability criterion _[1] to choose the best ``mu``. (False, by default)
-        mus : list | ndarray | 'auto' (default)
+        use_ES
+            use estimation stability criterion :cite:`limEstimationStabilityCrossValidation2016`
+            to choose the best ``mu`` (default ``False``).
+        mus
             range of mu to be considered for cross-validation
-        n_splits : int
+        n_splits
             k value used in k-fold cross-validation
-        n_workers : int
-            number of workers to be used for cross-validation
-
-        ..[1] Lim, Chinghway, and Bin Yu. "Estimation stability with cross-validation (ESCV)."
-        Journal of Computational and Graphical Statistics 25.2 (2016): 464-492.
+        n_workers
+            Number of workers to use for cross-validation.
+            ``None`` to use ``cpu_count/2`` (default).
+            ``0`` to run without :mod:`multiprocessing`.
+        compute_explained_variance
+            Compute voxel-wise explained variance.
         """
-        # if use_ES:
-        #     raise NotImplementedError
         # pre-whiten the object itself
         logger = logging.getLogger(__name__)
         if self._whitening_filter is None:
