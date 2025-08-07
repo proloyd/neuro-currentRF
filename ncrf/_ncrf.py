@@ -17,12 +17,7 @@ DEFAULT_MUs = np.logspace(-3, -1, 7)
 
 def _handle_noise_channels(noise: [NDVar, Covariance, np.ndarray], sensor_dim: Sensor) -> np.ndarray:
 
-    if isinstance(noise, NDVar):
-
-        er = noise.get_data(('sensor', 'time'))
-        noise_cov = np.dot(er, er.T) / er.shape[1]
-
-    elif isinstance(noise, Covariance):
+    if isinstance(noise, Covariance):
         chs_noise = set(noise.ch_names)
         chs_data = set(sensor_dim.names)
         chs_both = sorted(chs_noise.intersection(chs_data))
