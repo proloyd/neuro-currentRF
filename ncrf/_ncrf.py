@@ -20,25 +20,19 @@ def _handle_noise_channels(noise: [NDVar, Covariance, np.ndarray], sensor_dim: S
     if isinstance(noise, Covariance):
         chs_noise = set(noise.ch_names)
         chs_data = set(sensor_dim.names)
-        chs_both = sorted(chs_noise.intersection(chs_data))
+        missing = sorted(chs_data - chs_noise)
+        if missing:
+            raise RuntimeError(f"Missing channels in noise covariance: {', '.join(missing)}")
 
-        if len(chs_both) < len(chs_data):
-            missing = sorted(chs_data - chs_noise)
-            raise RuntimeError(
-                f"Missing channels found: {', '.join(missing)}.\n"
-                            )
+        index = [noise.ch_names.index(ch) for ch in sensor_dim.names]
 
-        if list(sensor_dim.names) != chs_both:
-            index = np.array([noise.ch_names.index(ch) for ch in chs_both])
-            noise_cov = noise.data[index[:, np.newaxis], index]
+        if noise['diag']:
+            full_cov = np.zeros((len(noise.data), len(noise.data)))
+            row, col = np.diag_indices(full_cov.shape[0])
+            full_cov[row, col] = noise.data
+            noise_cov = full_cov[index, :][:, index]
         else:
-            if noise['diag']:
-                squareMatrix = np.zeros((len(noise.data), len(noise.data)))
-                row, col = np.diag_indices(squareMatrix.shape[0])
-                squareMatrix[row, col] = noise.data
-                noise_cov = squareMatrix
-            else:
-                noise_cov = noise.data
+            noise_cov = noise.data[index, :][:, index]
 
     elif isinstance(noise, np.ndarray):
         n = len(sensor_dim)
