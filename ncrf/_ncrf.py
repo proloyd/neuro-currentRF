@@ -6,7 +6,6 @@ from typing import List
 import collections
 
 from eelbrain import NDVar, Sensor
-#from eelbrain._utils import natsorted
 from mne import Covariance
 import numpy as np
 
