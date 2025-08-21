@@ -6,7 +6,7 @@ from typing import List
 import collections
 
 from eelbrain import NDVar, Sensor
-from eelbrain._utils import natsorted
+#from eelbrain._utils import natsorted
 from mne import Covariance
 import numpy as np
 
@@ -14,6 +14,7 @@ from ._model import NCRF, RegressionData
 
 
 DEFAULT_MUs = np.logspace(-3, -1, 7)
+
 
 def _handle_noise_channels(noise: [NDVar, Covariance, np.ndarray], sensor_dim: Sensor) -> np.ndarray:
 
@@ -48,7 +49,6 @@ def _handle_noise_channels(noise: [NDVar, Covariance, np.ndarray], sensor_dim: S
         raise TypeError(f"Invalid noise type: {type(noise)}. Must be NDVar, Covariance, or ndarray.")
 
     return noise_cov
-
 
 
 def fit_ncrf(meg, stim, lead_field, noise, tstart=0, tstop=0.5, nlevels=1,
