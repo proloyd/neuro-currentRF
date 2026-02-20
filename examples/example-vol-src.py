@@ -288,7 +288,8 @@ model.h
 ###############################################################################
 # Visualization
 # -------------
-# A butterfly plot shows weights in all sources over time.
+# A butterfly plot can show weights in all sources over time.
+# We first visualize current vector magnitudes over time.
 # This is good for forming a quick impression of important time lags,
 # or peaks in the response:
 #
@@ -307,7 +308,7 @@ p = eelbrain.plot.Butterfly([h.norm('space') for h in hs_orig],
 # point in that fashion.
 # For brain activations to align with a schematic brain overlay,
 # the plotted image should be in MNI coordinate space.
-# Hence, we will first morph the NCRFs to the `fsaverage` brain,
+# Hence, we first morph the NCRFs to the `fsaverage` brain,
 # which is in MNI space.
 
 mne.datasets.fetch_fsaverage(subjects_dir)
@@ -332,9 +333,9 @@ def morph_to_fsaverage(h):
 hs = [morph_to_fsaverage(h) for h in hs_orig]
 
 ###############################################################################
-# Now, the following code plots the anatomical localization.
+# Now, we can plot the anatomical localization.
 # First, we locate the sources that are involved in the prominent early
-# peaks in the Common stimulus code: P50: 50ms, N100: 95ms, P200: 170ms.
+# peaks in the `Common` stimulus code: P50: 50 ms, N100: 95 ms, P200: 170 ms.
 # They correspond to auditory response in both conditions.
 
 times = (0.05, 0.095, 0.170,)
@@ -350,12 +351,13 @@ bs = [eelbrain.plot.GlassBrain(
       ) for time in times]
 
 ###############################################################################
-# Next, we do the same with NCRFs to the `Contrast` predictor. Note that the
-# peaks in the contrast condition are later than those in the common condition,
-# and emphasizes known temporal dynamics of mismatch negativity (MMN) response.
+# Next, we do the same with NCRFs to the `Contrast` predictor.
+# The `Contrast` predictor quantifies the difference between infrequent and
+# frequent beeps, which is commonly associated with a mismatch negativity (MMN)
+# response.
 # We locate the sources that are involved in the prominent MMN peak around
-# 190ms. Note that the dircetion of activation is opposite to that of early
-# peaks in the common condition.
+# 190 ms. Note that the current direction is downward (direction of the arrows),
+# corresponding to the negative potential on the scalp in the MMN.
 
 times = (0.190,)
 bf = eelbrain.plot.Butterfly(hs[1].norm('space'), axtitle='contrast',
@@ -370,11 +372,11 @@ bs = [eelbrain.plot.GlassBrain(
 
 ###############################################################################
 # Finally, we can reconstruct the response to frequent and infrequent stimuli
-# as :math:`[Common - Contrast]` amd :math:`[Common + Contrast]` respectively.
+# as :math:`[Common - Contrast]` amd :math:`[Common + Contrast]`, respectively.
 # Here, we locate the sources that are involved in the prominent peaks around
-# 450ms, which are stronger for infrequent stimuli, to the left motor cortex.
-# This aligns with the expected neural response to the motor task: the subject
-# presses a button when detecting a deviant with the right index finger.
+# 450 ms, which are stronger for infrequent stimuli, to the left motor cortex.
+# This aligns with expected neural activity related to the task: when
+# detecting a deviant, the subject pressed a button with the right index finger.
 vmax = 7e-11
 times = (0.45,)
 
